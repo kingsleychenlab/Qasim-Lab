@@ -1,0 +1,89 @@
+================================================================================
+AI WORD-EMBEDDING FIDELITY AND MEMORY
+Simple project summary
+================================================================================
+
+
+THE QUESTION
+--------------------------------------------------------------------------------
+When someone studies a word, is that word more likely to be remembered if their
+brain activity (EEG) more accurately "matches" the AI meaning of that word?
+
+
+THE PROCESS (in plain steps)
+--------------------------------------------------------------------------------
+1. Get an AI meaning for every word.
+   We ran each of the 576 study words through the T5-large AI model and saved a
+   1024-number "meaning fingerprint" for each word.
+
+2. Record the brain response to each word.
+   From the PEERS EEG dataset (4 people, 8 sessions, 4,608 word trials), we took
+   a slice of brain activity 300-800 ms after each word appeared: 129 sensors x
+   250 time points = about 32,000 numbers per word.
+
+3. Predict the AI meaning from the brain.
+   For each person/session, we trained a simple model (ridge regression) to go
+   from the ~32,000 brain numbers to the 1,024 AI-meaning numbers. We always
+   tested on words the model had not trained on.
+
+4. Score how good each prediction was.
+   We compared the predicted meaning to the true meaning using cosine similarity
+   (how closely two fingerprints line up). We called this score
+   "embedding fidelity" -- higher means the brain predicted the word's AI meaning
+   better.
+
+5. Ask the memory question.
+   We checked whether words with higher fidelity were more likely to be recalled
+   later, using a statistical model that accounts for person, word, and session.
+
+
+THE RESULT
+--------------------------------------------------------------------------------
+There was no memory effect.
+
+  - Remembered words scored 0.84627.
+  - Forgotten words scored 0.84711.
+  - The difference was -0.00084 (basically zero, and slightly the "wrong" way).
+  - Odds ratio 0.971, range [0.913, 1.033], p = 0.354.
+
+Because the range includes 1.0 and p is well above 0.05, fidelity did not
+predict whether a word was remembered.
+
+Important catch: the fidelity score looked high (~0.85), but that is misleading.
+All AI word-fingerprints point in a similar overall direction, so almost any
+guess scores ~0.85. When we tested whether the brain could pick the *correct*
+word out of all 576, it was no better than random guessing. So the brain signal,
+with this simple method, was not actually carrying reliable word-identity
+information.
+
+
+WHAT THIS MEANS
+--------------------------------------------------------------------------------
+- The prediction was not supported: remembered words did not show higher
+  brain-to-AI fidelity than forgotten words.
+
+- This is an honest, expected "null" result -- not a failure. The brain decoding
+  never rose above chance, so there was no real signal for a memory effect to
+  build on. You cannot detect a memory effect in a signal that isn't there yet.
+
+- The project is still valuable: the whole pipeline was built, double-checked,
+  and reproduced exactly. The brain data matched the raw files perfectly, the
+  memory labels were re-derived and matched 576/576, and an independent rerun
+  gave the same answer. So the method is trustworthy; it just needs a stronger
+  decoding step.
+
+- What would help next time: use a longer time window and cleaner EEG processing
+  (like the published paper it was based on), score decoding by whether it picks
+  the right word (not raw similarity), use richer brain features, and add many
+  more people. Only once decoding beats chance does the memory question become
+  answerable.
+
+
+BOTTOM LINE
+--------------------------------------------------------------------------------
+The project tested whether later-remembered words showed higher EEG-to-AI
+embedding fidelity than forgotten words. The final session-aware logistic
+mixed-effects model did not support this prediction: embedding fidelity was not
+significantly associated with later recall.
+
+================================================================================
