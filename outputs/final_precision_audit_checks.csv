@@ -1,0 +1,134 @@
+section,check,status,evidence,file
+structure,exists peers_words.csv,PASS,present,peers_words.csv
+structure,exists peers_word_order.csv,PASS,present,peers_word_order.csv
+structure,exists peers_t5large_embeddings.npy,PASS,present,peers_t5large_embeddings.npy
+structure,exists embedding_metadata.json,PASS,present,embedding_metadata.json
+structure,exists outputs/all_sessions_fidelity_results.csv,PASS,present,outputs/all_sessions_fidelity_results.csv
+structure,exists outputs/final_memory_model_summary.txt,PASS,present,outputs/final_memory_model_summary.txt
+structure,exists outputs/final_memory_model_results.csv,PASS,present,outputs/final_memory_model_results.csv
+structure,exists outputs/final_memory_model_metadata.json,PASS,present,outputs/final_memory_model_metadata.json
+structure,exists outputs/recall_label_audit.txt,PASS,present,outputs/recall_label_audit.txt
+structure,exists outputs/eeg_extraction_audit.txt,PASS,present,outputs/eeg_extraction_audit.txt
+structure,exists results/README.md,PASS,present,results/README.md
+structure,exists results/methods_and_math.md,PASS,present,results/methods_and_math.md
+structure,exists results/pipeline_summary.md,PASS,present,results/pipeline_summary.md
+structure,exists results/audit_report.md,PASS,present,results/audit_report.md
+structure,exists results/final_results.md,PASS,present,results/final_results.md
+structure,exists results/portfolio_summary.md,PASS,present,results/portfolio_summary.md
+structure,exists results/results_index.md,PASS,present,results/results_index.md
+t5,peers_words.csv has 576 rows,PASS,576,peers_words.csv
+t5,peers_word_order.csv has 576 rows,PASS,576,peers_word_order.csv
+t5,embeddings shape 576x1024,PASS,"(576, 1024)",peers_t5large_embeddings.npy
+t5,row_index is exactly 0..575,PASS,min 0 max 575,peers_word_order.csv
+t5,no NaN,PASS,none,
+t5,no Inf,PASS,none,
+t5,no all-zero vectors,PASS,min norm 1867.67,
+t5,norms plausible/nonzero,PASS,norm min 1867.7 mean 2165.3 max 2609.1,
+t5,metadata model google-t5/t5-large,PASS,google-t5/t5-large,embedding_metadata.json
+t5,metadata class T5EncoderModel,PASS,T5EncoderModel,embedding_metadata.json
+t5,metadata encoder_only True,PASS,True,embedding_metadata.json
+t5,metadata layer 12 used,PASS,12,embedding_metadata.json
+t5,metadata EOS excluded,PASS,True,
+t5,metadata padding excluded,PASS,True,
+t5,metadata shape 576x1024,PASS,"[576, 1024]",
+t5,word order consistent (order==embeddings CSV order),PASS,576 unique words,
+session,4 subjects,PASS,"['LTP269', 'LTP293', 'LTP299', 'LTP303']",
+session,8 sessions,PASS,8,
+session,2 sessions per subject,PASS,"{'LTP269': 2, 'LTP293': 2, 'LTP299': 2, 'LTP303': 2}",
+session,expected subject/session set matches,PASS,"[('LTP269', 12), ('LTP269', 20), ('LTP293', 5), ('LTP293', 22), ('LTP299', 2), ('LTP299', 6), ('LTP303', 10), ('LTP303', 22)]",
+session,576 trials per session,PASS,unique sizes [np.int64(576)],
+session,total rows 4608,PASS,4608,
+session,each session has 576 unique words,PASS,all 576,
+session,all words in peers list,PASS,100.0% in peers,
+session,no missing in required cols,PASS,complete,
+session,recalled only 0/1,PASS,"[np.int64(0), np.int64(1)]",
+session,no NaN/Inf in numeric cols,PASS,clean,
+session,recalled/forgotten = 2423/2185,PASS,2423/2185,
+recall,LTP269/12 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP269/ses-12/eeg/sub-LTP269_ses-12_task-ltpFR2_events.tsv
+recall,LTP269/12 no recognition events used,PASS,"0 RECOG_* present, unused",
+recall,LTP269/20 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP269/ses-20/eeg/sub-LTP269_ses-20_task-ltpFR2_events.tsv
+recall,LTP269/20 no recognition events used,PASS,"0 RECOG_* present, unused",
+recall,LTP293/5 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP293/ses-5/eeg/sub-LTP293_ses-5_task-ltpFR2_events.tsv
+recall,LTP293/5 no recognition events used,PASS,"0 RECOG_* present, unused",
+recall,LTP293/22 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP293/ses-22/eeg/sub-LTP293_ses-22_task-ltpFR2_events.tsv
+recall,LTP293/22 no recognition events used,PASS,"0 RECOG_* present, unused",
+recall,LTP299/2 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+recall,LTP299/2 no recognition events used,PASS,"0 RECOG_* present, unused",
+recall,LTP299/6 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP299/ses-6/eeg/sub-LTP299_ses-6_task-ltpFR2_events.tsv
+recall,LTP299/6 no recognition events used,PASS,"0 RECOG_* present, unused",
+recall,LTP303/10 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP303/ses-10/eeg/sub-LTP303_ses-10_task-ltpFR2_events.tsv
+recall,LTP303/10 no recognition events used,PASS,"0 RECOG_* present, unused",
+recall,LTP303/22 576/576 labels match,PASS,576/576,data/ds004395/sub-LTP303/ses-22/eeg/sub-LTP303_ses-22_task-ltpFR2_events.tsv
+recall,LTP303/22 no recognition events used,PASS,"0 RECOG_* present, unused",
+eeg,LTP269/12 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP269/ses-12/eeg/sub-LTP269_ses-12_task-ltpFR2_eeg.edf
+eeg,LTP269/12 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP269/12 no NaN/Inf, no all-zero rows",PASS,clean,
+eeg,LTP269/20 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP269/ses-20/eeg/sub-LTP269_ses-20_task-ltpFR2_eeg.edf
+eeg,LTP269/20 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP269/20 no NaN/Inf, no all-zero rows",PASS,clean,
+eeg,LTP293/5 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP293/ses-5/eeg/sub-LTP293_ses-5_task-ltpFR2_eeg.edf
+eeg,LTP293/5 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP293/5 no NaN/Inf, no all-zero rows",PASS,clean,
+eeg,LTP293/22 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP293/ses-22/eeg/sub-LTP293_ses-22_task-ltpFR2_eeg.edf
+eeg,LTP293/22 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP293/22 no NaN/Inf, no all-zero rows",PASS,clean,
+eeg,LTP299/2 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf
+eeg,LTP299/2 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP299/2 no NaN/Inf, no all-zero rows",PASS,clean,
+eeg,LTP299/6 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP299/ses-6/eeg/sub-LTP299_ses-6_task-ltpFR2_eeg.edf
+eeg,LTP299/6 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP299/6 no NaN/Inf, no all-zero rows",PASS,clean,
+eeg,LTP303/10 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP303/ses-10/eeg/sub-LTP303_ses-10_task-ltpFR2_eeg.edf
+eeg,LTP303/10 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP303/10 no NaN/Inf, no all-zero rows",PASS,clean,
+eeg,LTP303/22 sfreq=500 & 129 ch & X 576x32250,PASS,"sfreq=500.0 ch=129 X=(576, 32250)",data/ds004395/sub-LTP303/ses-22/eeg/sub-LTP303_ses-22_task-ltpFR2_eeg.edf
+eeg,LTP303/22 sampled rows bit-exact vs EDF (float32),PASS,"worst diff 0.00e+00, in_bounds=True",
+eeg,"LTP303/22 no NaN/Inf, no all-zero rows",PASS,clean,
+ridge,"LTP269/12 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,"LTP269/20 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,"LTP293/5 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,"LTP293/22 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,"LTP299/2 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,"LTP299/6 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,"LTP303/10 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,"LTP303/22 alpha=1e4,5-fold,svd,shuffle,per-session",PASS,alpha=10000.0 folds=5 solver=svd,
+ridge,scaler fit on train fold only (source),PASS,StandardScaler().fit(X[tr]),scripts/ridge_corrected_metrics.py
+ridge,ridge fit on train only (source),PASS,"fit on X[tr],Ymat[tr]",scripts/ridge_corrected_metrics.py
+ridge,predict transforms test with train scaler (source),PASS,predict(scaler.transform(X[te])),scripts/ridge_corrected_metrics.py
+ridge,alpha=10000 & solver svd (source),PASS,Ridge svd alpha 1e4,scripts/ridge_corrected_metrics.py
+ridge,one out-of-fold prediction per trial (KFold disjoint),PASS,KFold splits,scripts/ridge_corrected_metrics.py
+ridge,embedding_fidelity == raw_cosine (combined table),PASS,allclose True,outputs/all_sessions_fidelity_results.csv
+ridge,"raw_cosine defined as cos(pred,true) (source)",PASS,cosine to correct candidate,scripts/ridge_corrected_metrics.py
+corrected,column present: centered_cosine,PASS,present,
+corrected,column present: true_word_percentile,PASS,present,
+corrected,column present: centered_true_word_percentile,PASS,present,
+corrected,"true_word_percentile in [0,1]",PASS,"[0.000,1.000]",
+corrected,"centered_true_word_percentile in [0,1]",PASS,"[0.000,1.000]",
+corrected,true_word_percentile near chance 0.5,PASS,mean 0.4981,
+corrected,centered_true_word_percentile near chance 0.5,PASS,mean 0.5246,
+corrected,"raw_cosine high (~0.85, inflated)",PASS,mean 0.8467,
+final,main metric is raw_cosine (== embedding_fidelity),PASS,raw_cosine,
+final,coefficient = -0.0291,PASS,-0.0291,
+final,odds ratio = 0.971,PASS,0.9714,
+final,"CI = [0.913, 1.033]",PASS,"[0.9134,1.0330]",
+final,p ~ 0.354,PASS,0.3544,
+final,remembered mean fidelity = 0.84627,PASS,0.84627,
+final,forgotten mean fidelity = 0.84711,PASS,0.84711,
+final,difference = -0.00084,PASS,-0.00084,
+final,conclusion = no significant effect,PASS,no different,
+final,formula recalled ~ embedding_fidelity + session + (1|subject)+(1|word),PASS,recalled ~ embedding_fidelity + session + (1|subject) + (1|word),
+final,embedding_fidelity metric = raw_cosine,PASS,raw_cosine,
+final,predictor z-scored (OR per 1 SD),PASS,z-scored (OR per 1 SD),
+final,session fixed effect + RE subject & word,PASS,"fixed effect, dummy-coded C(session) | 1|subject + 1|word",
+final,logistic mixed-effects (BinomialBayesMixedGLM) in source,PASS,GLMM present,scripts/run_final_memory_model.py
+final,supplementary metrics labeled SUPPLEMENTARY,PASS,supplementary list,scripts/run_final_memory_model.py
+gitignore,ignores data/,PASS,present,.gitignore
+gitignore,ignores *.edf,PASS,present,.gitignore
+gitignore,ignores *.bdf,PASS,present,.gitignore
+gitignore,ignores outputs/subjects/,PASS,present,.gitignore
+gitignore,ignores outputs/X_eeg.npy,PASS,present,.gitignore
+gitignore,ignores outputs/Y_t5.npy,PASS,present,.gitignore
+gitignore,ignores predicted_embeddings,PASS,present,.gitignore
+gitignore,ignores venv/,PASS,present,.gitignore
+gitignore,ignores __pycache__,PASS,present,.gitignore
+gitignore,ignores .DS_Store,PASS,present,.gitignore

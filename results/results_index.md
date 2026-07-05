@@ -13,6 +13,8 @@ read-only from `outputs/` and the project root; no pipeline output was modified.
 | `audit_report.md` | All validation/audit checks with a PASS/FAIL table |
 | `final_results.md` | The final statistical model, numbers, and conclusion |
 | `portfolio_summary.md` | Polished, honest project summary for portfolio/GitHub |
+| `final_precision_audit.md` | Full precision audit (verdict, data integrity, math, audit table, result, limitations) |
+| `reproducibility_checklist.md` | Envs, rerun commands, data location, final artifacts, git-ignored large files |
 | `results_index.md` | This file |
 
 ## Summary tables (CSV)

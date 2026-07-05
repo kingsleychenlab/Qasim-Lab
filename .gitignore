@@ -1,14 +1,23 @@
 # Virtual environment
 venv/
 
-# Large raw EEG data — never commit (ds004395 is 8.7 TB upstream)
-data/ds004395/**/*.edf
-data/ds004395/**/*.bdf
-data/ds004395/**/*.set
-data/ds004395/**/*.fdt
-data/ds004395/**/*.eeg
-data/ds004395/**/*.vhdr
-data/ds004395/**/*.vmrk
+# Raw dataset — never commit (ds004395 is 8.7 TB upstream)
+data/
+*.edf
+*.bdf
+*.set
+*.fdt
+*.eeg
+*.vhdr
+*.vmrk
 
-# OS cruft
+# Large generated artifacts (regenerable from the pipeline)
+outputs/subjects/
+outputs/X_eeg.npy
+outputs/Y_t5.npy
+outputs/predicted_embeddings*.npy
+
+# Python / OS cruft
+__pycache__/
+*.pyc
 .DS_Store
