@@ -1,0 +1,94 @@
+
+==============================================================================
+ENCODING-TRIALS BUILD + VALIDATION
+==============================================================================
+event file : /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+eeg file   : /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf
+
+==============================================================================
+COUNTS
+==============================================================================
+WORD events     : 256
+REC_WORD events : 154
+all WORD events have item_num.
+all REC_WORD events have item_num.
+
+==============================================================================
+RECALL SUMMARY
+==============================================================================
+encoding trials (rows) : 256
+recalled (1)           : 124
+forgotten (0)          : 132
+recall rate            : 0.4844
+unique trials/lists    : 16  -> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+words per trial:
+   trial   1 : 16 words
+   trial   2 : 16 words
+   trial   3 : 16 words
+   trial   4 : 16 words
+   trial   5 : 16 words
+   trial   6 : 16 words
+   trial   7 : 16 words
+   trial   8 : 16 words
+   trial   9 : 16 words
+   trial  10 : 16 words
+   trial  11 : 16 words
+   trial  12 : 16 words
+   trial  13 : 16 words
+   trial  14 : 16 words
+   trial  15 : 16 words
+   trial  16 : 16 words
+
+==============================================================================
+FIRST 20 ROWS
+==============================================================================
+subject  session  trial  serialpos      word  item_num   onset  sample  recalled                                                                 eeg_file                                                                  event_file
+ LTP063       15      1          1     BEAST       108 294.724  147362         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          2    ISLAND       745 298.772  149386         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          3    PROTON      1132 302.954  151477         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          4   PANTHER      1009 306.844  153422         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          5       DAM       436 310.852  155426         0 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          6     BISON       131 315.034  157517         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          7     BERRY       122 318.984  159492         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          8     ALLEY        15 323.024  161512         0 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1          9  CONCRETE       361 327.222  163611         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1         10      ROAD      1196 331.104  165552         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1         11  WAITRESS      1581 335.162  167581         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1         12     FEAST       556 339.102  169551         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1         13    COLUMN       350 342.984  171492         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1         14 EDITORIAL       517 347.150  173575         0 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1         15      SLUG      1329 351.082  175541         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      1         16    TOMATO      1476 355.014  177507         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      2          1     STONE      1385 440.104  220052         0 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      2          2    VIOLIN      1571 443.970  221985         0 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      2          3  DIRECTOR       471 448.026  224013         0 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+ LTP063       15      2          4   WITNESS      1618 452.176  226088         1 data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_eeg.edf data/ds004395/sub-LTP063/ses-15/eeg/sub-LTP063_ses-15_task-ltpFR_events.tsv
+
+==============================================================================
+VALIDATION CHECKS
+==============================================================================
+[PASS] no missing word -- 0 missing
+[PASS] no missing onset -- 0 missing
+[PASS] no missing sample -- 0 missing
+[PASS] recalled is only 0 or 1 -- values=[0, 1]
+[PASS] no duplicate subject/session/trial/serialpos -- 0 duplicate rows
+[PASS] recalled matches agree on item_name (backup key) -- 0 mismatches
+
+==============================================================================
+PEERS WORD-LIST CROSS-CHECK
+==============================================================================
+peers list size            : 576
+encoding rows              : 256
+rows whose word IS in peers: 91 (35.5%)
+unique session words       : 256
+unique words NOT in peers  : 165
+[WARN] not every word is in peers_word_order.csv -- EXPECTED for task-ltpFR: this session uses the ~1638-word wasnorm_wordpool, while peers_word_order.csv is the 576-word (ltpFR2) pool. No rows dropped; reporting only.
+    examples not in peers: ['ACID', 'ALBUM', 'ALLEY', 'AMBULANCE', 'ASHTRAY', 'ASTRONAUT', 'AUTOMOBILE', 'BAIT', 'BAKER', 'BANANA', 'BARRACUDA', 'BASKET', 'BEAR', 'BEET', 'BEETLE']
+
+==============================================================================
+RESULT
+==============================================================================
+wrote 256 rows -> /Users/kingsley/Desktop/Neurolab/outputs/encoding_trials.csv
+summary -> /Users/kingsley/Desktop/Neurolab/outputs/encoding_trials_summary.txt
+errors: 0   warnings: 1
+STATUS: OK (warnings are informational; no rows dropped).

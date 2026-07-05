@@ -1,0 +1,101 @@
+
+==============================================================================
+ds004395 (PEERS) INSPECTION REPORT
+==============================================================================
+data root: /Users/kingsley/Desktop/Neurolab/data/ds004395
+cwd      : /Users/kingsley/Desktop/Neurolab
+
+==============================================================================
+STRUCTURE
+==============================================================================
+filters -> subject=sub-LTP293 session=ses-3
+subject folders (1): ['sub-LTP293']
+session folders (1): ['sub-LTP293/ses-3']
+
+EEG data files (1):
+     281.1 MB  sub-LTP293/ses-3/eeg/sub-LTP293_ses-3_task-ltpFR2_eeg.edf
+
+events.tsv files (1):
+  sub-LTP293/ses-3/eeg/sub-LTP293_ses-3_task-ltpFR2_events.tsv
+
+==============================================================================
+EVENTS FILE: /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP293/ses-3/eeg/sub-LTP293_ses-3_task-ltpFR2_events.tsv
+==============================================================================
+rows: 1506   columns: 16
+columns: ['onset', 'duration', 'trial_type', 'sample', 'stim_file', 'subject', 'experiment', 'session', 'trial', 'item_name', 'item_num', 'list', 'answer', 'test_x', 'test_y', 'test_z']
+
+-- first 30 rows --
+  onset duration trial_type sample stim_file subject experiment session trial item_name item_num list answer test_x test_y test_z
+244.614      NaN SESS_START 122307       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN  NaN    NaN      0      0      0
+258.778      NaN      START 129389       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1    NaN    NaN    NaN    NaN
+ 258.79      NaN       PROB 129395       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1     16      6      9      1
+260.908      NaN       PROB 130454       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1     11      1      7      3
+262.208      NaN       PROB 131104       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1     15      8      6      1
+263.426      NaN       PROB 131713       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1     14      2      7      5
+264.778      NaN       PROB 132389       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1     25      8      9      8
+266.212      NaN       PROB 133106       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1     13      1      3      9
+267.412      NaN       PROB 133706       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1      6      2      1      3
+ 268.48      NaN       PROB 134240       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1      9      5      2      2
+269.652      NaN       STOP 134826       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN   -1    NaN    NaN    NaN    NaN
+309.532      NaN DISTRACTOR 154766       NaN  LTP293     ltpFR2       3     1       NaN      NaN  NaN    NaN      0      0      0
+309.532      NaN      START 154766       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1    NaN    NaN    NaN    NaN
+309.546      NaN       PROB 154773       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1      4      2      1      1
+310.798      NaN       PROB 155399       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     14      4      9      1
+312.014      NaN       PROB 156007       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1      9      3      3      3
+313.084      NaN       PROB 156542       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     14      6      2      6
+314.436      NaN       PROB 157218       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     15      3      3      9
+ 315.85      NaN       PROB 157925       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     14      8      2      4
+317.052      NaN       PROB 158526       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     16      1      9      6
+318.086      NaN       PROB 159043       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     10      1      7      2
+320.336      NaN       PROB 160168       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1      7      2      4      1
+321.438      NaN       PROB 160719       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     12      8      2      2
+322.956      NaN       PROB 161478       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     19      6      9      4
+324.824      NaN       PROB 162412       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     11      8      3      1
+326.226      NaN       PROB 163113       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     14      7      4      3
+ 327.81      NaN       PROB 163905       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     19      9      3      7
+329.178      NaN       PROB 164589       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1     14      4      3      7
+330.362      NaN       PROB 165181       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1      9      6      1      2
+332.078      NaN       STOP 166039       NaN  LTP293     ltpFR2       3   NaN       NaN      NaN    1    NaN    NaN    NaN    NaN
+
+-- unique values for likely/enumerable columns --
+(present from requested list: ['trial_type', 'item_name', 'list', 'session', 'onset'])
+  [trial_type] 11 unique (NaN rows: 0):
+      ['DISTRACTOR', 'PROB', 'REC_START', 'REC_WORD', 'REC_WORD_VV', 'REST_REWET', 'SESS_END', 'SESS_START', 'START', 'STOP', 'WORD']
+  [item_name] 579 unique (showing first 50):
+      ['OUTFIT', 'BLADE', 'KLEENEX', 'SHERIFF', 'AGENT', 'ITEM', 'DASHBOARD', 'OFFICE', 'TURKEY', 'FREEZER', 'FINGER', 'BABY', 'HOSTESS', 'DRESSER', 'BANKER', 'SCARF', 'INMATE', 'DINER', 'PAPER', 'REPORT', 'MOP', 'BATHTUB', 'INFANT', 'GUARD', 'CRIB', 'SNAIL', 'SLIME', 'VIKING', 'CROWN', 'CANAL', 'YACHT', 'PLASTER', 'SMOG', 'POCKET', 'BRANDY', 'BANK', 'COUSIN', 'SIBLING', 'APRON', 'ROBBER', 'THIEF', 'FUNGUS', 'GLOBE', 'ATLAS', 'HUMAN', 'BODY', 'WORLD', 'TYPIST', 'LONDON', 'FEMALE']
+  [list] 37 unique (NaN rows: 928):
+      ['-1.0', '1.0', '10.0', '11.0', '12.0', '13.0', '14.0', '15.0', '16.0', '17.0', '18.0', '19.0', '2.0', '20.0', '21.0', '22.0', '23.0', '24.0', '25.0', '26.0', '27.0', '28.0', '29.0', '3.0', '30.0', '31.0', '32.0', '33.0', '34.0', '35.0', '36.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0']
+  [session] 1 unique (NaN rows: 0):
+      ['3']
+  [onset] numeric, 1496 unique | min=33.518 max=3291.464 mean=1436.772 (continuous — not enumerating)
+  [stim_file] 1 unique (NaN rows: 640):
+      ['wordpools/wasnorm_wordpool_576.txt']
+  [subject] 1 unique (NaN rows: 0):
+      ['LTP293']
+  [experiment] 1 unique (NaN rows: 0):
+      ['ltpFR2']
+
+-- column-role candidates (heuristic, names not assumed) --
+  possible WORD / STIMULUS columns : ['stim_file', 'item_name', 'item_num']
+  possible ONSET / TIME columns    : ['onset', 'sample']
+  possible RECALL / MEMORY columns : []
+  recall-related 'trial_type' VALUES (outcome derivable, NOT a ready label): ['REC_START', 'REC_WORD', 'REC_WORD_VV']
+  NOTE: no assumption is made that any single column is a recall label; free-recall success must be DERIVED (match presented WORD events to REC_WORD events per trial). No labels are fabricated here.
+
+==============================================================================
+EEG FILE (MNE read): /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP293/ses-3/eeg/sub-LTP293_ses-3_task-ltpFR2_eeg.edf
+==============================================================================
+detected EEG format: .edf
+mne version: 1.12.1
+  sampling rate (sfreq) : 500.0 Hz
+  channel count         : 129
+  n_times               : 1088500
+  duration              : 2177.0 s
+  highpass / lowpass    : 0.0 / 250.0 Hz
+  channel types         : {'eeg': 129}
+  first 10 channels     : ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9', 'E10']
+
+==============================================================================
+END OF REPORT
+==============================================================================
+Report written to: /Users/kingsley/Desktop/Neurolab/outputs/inspection_sub-LTP293_ses-3.txt

@@ -1,0 +1,24 @@
+{
+  "description": "T5-large targets aligned to encoding_trials.csv row order.",
+  "source_embeddings": "peers_t5large_embeddings.npy",
+  "source_trials": "outputs/subjects/sub-LTP302_ses-17/encoding_trials.csv",
+  "peers_word_order": "peers_word_order.csv",
+  "model_name": "google-t5/t5-large",
+  "encoder_layer_used": 12,
+  "n_trials": 576,
+  "embedding_dim": 1024,
+  "Y_shape": [
+    576,
+    1024
+  ],
+  "dtype": "float32",
+  "order_source": "encoding_trials.csv (exact row order preserved)",
+  "all_words_matched": true,
+  "no_nan": true,
+  "no_inf": true,
+  "no_zero_vectors": true,
+  "norm_min": 1867.671142578125,
+  "norm_max": 2609.075439453125,
+  "norm_mean": 2165.33984375,
+  "timestamp_utc": "2026-07-05T01:45:29.386616+00:00"
+}

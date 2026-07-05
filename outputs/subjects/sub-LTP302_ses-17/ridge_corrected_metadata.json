@@ -1,0 +1,136 @@
+{
+  "kind": "single-subject CORRECTED decoding smoke test (NOT final inference)",
+  "subject": "LTP302",
+  "session": 17,
+  "task": "ltpFR2",
+  "n_trials": 576,
+  "alpha": 10000.0,
+  "n_folds": 5,
+  "kfold_shuffle": true,
+  "seed": 42,
+  "shuffle_seed": 2024,
+  "ridge_solver": "svd",
+  "n_candidates": 576,
+  "metrics_overall": {
+    "raw_cosine": 0.8477441518024168,
+    "centered_cosine": 0.00710189377216263,
+    "true_word_rank": 289.81597222222223,
+    "true_word_percentile": 0.49771135265700484,
+    "top1_correct": 0.001736111111111111,
+    "top5_correct": 0.003472222222222222,
+    "top10_correct": 0.013888888888888888,
+    "centered_true_word_rank": 270.9739583333333,
+    "centered_true_word_percentile": 0.530480072463768,
+    "centered_top1_correct": 0.0,
+    "centered_top5_correct": 0.001736111111111111,
+    "centered_top10_correct": 0.010416666666666666
+  },
+  "remembered_vs_forgotten": {
+    "raw_cosine": {
+      "remembered": 0.8487490855270609,
+      "forgotten": 0.8471231253433671,
+      "diff": 0.0016259601836937643
+    },
+    "centered_cosine": {
+      "remembered": 0.007662345474713828,
+      "forgotten": 0.0067555472144062685,
+      "diff": 0.0009067982603075597
+    },
+    "true_word_rank": {
+      "remembered": 285.6272727272727,
+      "forgotten": 292.40449438202245,
+      "diff": -6.777221654749724
+    },
+    "true_word_percentile": {
+      "remembered": 0.50499604743083,
+      "forgotten": 0.493209574987787,
+      "diff": 0.011786472443043039
+    },
+    "top1_correct": {
+      "remembered": 0.0,
+      "forgotten": 0.0028089887640449437,
+      "diff": -0.0028089887640449437
+    },
+    "top5_correct": {
+      "remembered": 0.004545454545454545,
+      "forgotten": 0.0028089887640449437,
+      "diff": 0.0017364657814096015
+    },
+    "top10_correct": {
+      "remembered": 0.013636363636363636,
+      "forgotten": 0.014044943820224719,
+      "diff": -0.000408580183861083
+    },
+    "centered_true_word_rank": {
+      "remembered": 269.97727272727275,
+      "forgotten": 271.58988764044943,
+      "diff": -1.6126149131766851
+    },
+    "centered_true_word_percentile": {
+      "remembered": 0.5322134387351778,
+      "forgotten": 0.5294088910600879,
+      "diff": 0.0028045476750898635
+    },
+    "centered_top1_correct": {
+      "remembered": 0.0,
+      "forgotten": 0.0,
+      "diff": 0.0
+    },
+    "centered_top5_correct": {
+      "remembered": 0.004545454545454545,
+      "forgotten": 0.0,
+      "diff": 0.004545454545454545
+    },
+    "centered_top10_correct": {
+      "remembered": 0.004545454545454545,
+      "forgotten": 0.014044943820224719,
+      "diff": -0.009499489274770173
+    }
+  },
+  "real_vs_shuffled": {
+    "true_word_rank": {
+      "real": 289.81597222222223,
+      "shuffled": 288.53125
+    },
+    "true_word_percentile": {
+      "real": 0.49771135265700484,
+      "shuffled": 0.499945652173913
+    },
+    "top1_correct": {
+      "real": 0.001736111111111111,
+      "shuffled": 0.003472222222222222
+    },
+    "top5_correct": {
+      "real": 0.003472222222222222,
+      "shuffled": 0.015625
+    },
+    "top10_correct": {
+      "real": 0.013888888888888888,
+      "shuffled": 0.027777777777777776
+    },
+    "centered_true_word_rank": {
+      "real": 270.9739583333333,
+      "shuffled": 285.26215277777777
+    },
+    "centered_true_word_percentile": {
+      "real": 0.530480072463768,
+      "shuffled": 0.5056310386473429
+    },
+    "centered_top1_correct": {
+      "real": 0.0,
+      "shuffled": 0.001736111111111111
+    },
+    "centered_top5_correct": {
+      "real": 0.001736111111111111,
+      "shuffled": 0.013888888888888888
+    },
+    "centered_top10_correct": {
+      "real": 0.010416666666666666,
+      "shuffled": 0.027777777777777776
+    }
+  },
+  "n_recalled": 220,
+  "n_forgotten": 356,
+  "timestamp_utc": "2026-07-05T01:45:44.512287+00:00",
+  "disclaimer": "Smoke test only. Single subject. No mixed-effects model, no significance testing. Not final inference."
+}

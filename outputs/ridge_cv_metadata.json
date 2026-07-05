@@ -1,0 +1,31 @@
+{
+  "kind": "single-subject ridge smoke test (NOT final analysis)",
+  "subject": "LTP269",
+  "session": 20,
+  "task": "ltpFR2",
+  "n_trials": 576,
+  "x_shape": [
+    576,
+    32250
+  ],
+  "y_shape": [
+    576,
+    1024
+  ],
+  "alpha": 10000.0,
+  "n_folds": 5,
+  "kfold_shuffle": true,
+  "seed": 42,
+  "ridge_solver": "svd",
+  "standardize": "StandardScaler fit on train fold only",
+  "cv": "held-out-trial KFold; train/test disjoint",
+  "fidelity_metric": "cosine similarity(predicted, true) per held-out trial",
+  "mean_fidelity_overall": 0.8454495802507919,
+  "mean_fidelity_recalled": 0.8459439672299836,
+  "mean_fidelity_forgotten": 0.8452137956914851,
+  "remembered_minus_forgotten": 0.0007301715384984142,
+  "n_recalled": 186,
+  "n_forgotten": 390,
+  "timestamp_utc": "2026-07-05T01:18:55.133343+00:00",
+  "disclaimer": "Smoke test only. Not final inference. No mixed-effects model. No significance testing performed here."
+}

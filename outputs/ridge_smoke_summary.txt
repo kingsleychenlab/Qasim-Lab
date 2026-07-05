@@ -1,0 +1,32 @@
+========================================================================
+RIDGE SMOKE TEST — single subject LTP269/ses-20 (NOT final analysis)
+========================================================================
+X_eeg: (576, 32250)   Y_t5: (576, 1024)   trials: 576
+alpha=10000.0  folds=5  seed=42  solver=svd (n<<p)
+  fold 0: train=460 test=116
+  fold 1: train=461 test=115
+  fold 2: train=461 test=115
+  fold 3: train=461 test=115
+  fold 4: train=461 test=115
+
+=== VALIDATION ===
+[PASS] fidelity_results has 576 rows -- 576
+[PASS] predicted_embeddings shape 576 x 1024 -- (576, 1024)
+[PASS] every trial has exactly one held-out prediction -- counts unique=[1]
+[PASS] predictions have no NaN/Inf
+[PASS] fidelity has no NaN/Inf
+
+=== FIDELITY (cosine sim of held-out predictions) ===
+overall mean fidelity     : 0.8454  (sd 0.0316, min 0.7015, max 0.9033)
+recalled  (n=186)   mean fidelity: 0.8459
+forgotten (n=390)  mean fidelity: 0.8452
+remembered - forgotten     : +0.0007
+
+wrote:
+  outputs/fidelity_results.csv
+  outputs/predicted_embeddings.npy
+  outputs/ridge_cv_metadata.json
+  outputs/ridge_smoke_summary.txt
+
+*** SMOKE TEST ONLY — single subject, not final inference. Do NOT interpret as the mixed-effects result. ***
+STATUS: OK
