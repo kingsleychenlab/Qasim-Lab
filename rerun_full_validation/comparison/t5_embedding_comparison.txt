@@ -1,0 +1,13 @@
+T5 EMBEDDING COMPARISON (rerun vs current)
+==================================================
+shape match      : True  (cur (576, 1024), rerun (576, 1024))
+word order match : True
+max abs diff     : 3.204e-04
+mean abs diff    : 1.836e-05
+max rel diff     : 6.216e-01
+norms current    : min 1867.7 mean 2165.3 max 2609.1
+norms rerun      : min 1867.7 mean 2165.3 max 2609.1
+no NaN/Inf rerun : True
+
+threshold: acceptable if max abs diff < 1e-3 (float32/MPS recompute).
+VERDICT: PASS (float32-level agreement)

@@ -1,0 +1,22 @@
+{
+  "model_name": "google-t5/t5-large",
+  "model_class": "T5EncoderModel",
+  "encoder_only": true,
+  "encoder_layer_used": 12,
+  "encoder_layer_count": 24,
+  "eos_excluded": true,
+  "padding_excluded": true,
+  "eos_token_id": 1,
+  "pad_token_id": 0,
+  "num_words": 576,
+  "embedding_dim": 1024,
+  "matrix_shape": [
+    576,
+    1024
+  ],
+  "dtype": "float32",
+  "device": "mps",
+  "torch": "2.12.1",
+  "timestamp_utc": "2026-07-05T02:50:19.978819+00:00",
+  "note": "independent reproducibility rerun recompute"
+}

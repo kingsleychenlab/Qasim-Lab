@@ -1,0 +1,28 @@
+encoding_trials: 576 rows
+peers_word_order: 576 rows
+embeddings: (576, 1024) float32
+
+=== VALIDATION ===
+[PASS] Y_t5 shape is (576, 1024) -- got (576, 1024)
+[PASS] row order matches encoding_trials.csv exactly
+[PASS] every trial word matched a peers_word_order row
+[PASS] no NaN values
+[PASS] no infinite values
+[PASS] no zero vectors -- min norm 1867.6713
+
+first 10 word -> embedding-row matches:
+  trial[  0] CATTLE       -> peers_row  80  ||emb||=2069.046
+  trial[  1] LIGHTNING    -> peers_row 283  ||emb||=2022.258
+  trial[  2] GYMNAST      -> peers_row 222  ||emb||=1971.502
+  trial[  3] JEANS        -> peers_row 254  ||emb||=2254.164
+  trial[  4] OX           -> peers_row 342  ||emb||=2024.875
+  trial[  5] TABLET       -> peers_row 510  ||emb||=2064.009
+  trial[  6] DRESSER      -> peers_row 156  ||emb||=2136.442
+  trial[  7] FRANCE       -> peers_row 192  ||emb||=2340.467
+  trial[  8] DONOR        -> peers_row 150  ||emb||=2238.975
+  trial[  9] CHEST        -> peers_row  87  ||emb||=2348.137
+
+wrote /Users/kingsley/Desktop/Neurolab/rerun_full_validation/outputs/subjects/sub-LTP293_ses-22/Y_t5.npy (576, 1024)
+wrote /Users/kingsley/Desktop/Neurolab/rerun_full_validation/outputs/subjects/sub-LTP293_ses-22/trial_targets_metadata.csv
+wrote /Users/kingsley/Desktop/Neurolab/rerun_full_validation/outputs/subjects/sub-LTP293_ses-22/target_metadata.json
+STATUS: OK

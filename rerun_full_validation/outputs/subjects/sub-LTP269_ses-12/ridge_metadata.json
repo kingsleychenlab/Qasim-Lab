@@ -1,0 +1,136 @@
+{
+  "kind": "single-subject CORRECTED decoding smoke test (NOT final inference)",
+  "subject": "LTP269",
+  "session": 12,
+  "task": "ltpFR2",
+  "n_trials": 576,
+  "alpha": 10000.0,
+  "n_folds": 5,
+  "kfold_shuffle": true,
+  "seed": 42,
+  "shuffle_seed": 2024,
+  "ridge_solver": "svd",
+  "n_candidates": 576,
+  "metrics_overall": {
+    "raw_cosine": 0.8476794406254853,
+    "centered_cosine": 0.01660861997472348,
+    "true_word_rank": 286.75347222222223,
+    "true_word_percentile": 0.5030374396135265,
+    "top1_correct": 0.0,
+    "top5_correct": 0.012152777777777778,
+    "top10_correct": 0.019097222222222224,
+    "centered_true_word_rank": 260.1423611111111,
+    "centered_true_word_percentile": 0.5493176328502415,
+    "centered_top1_correct": 0.0,
+    "centered_top5_correct": 0.001736111111111111,
+    "centered_top10_correct": 0.010416666666666666
+  },
+  "remembered_vs_forgotten": {
+    "raw_cosine": {
+      "remembered": 0.845574050377931,
+      "forgotten": 0.8486915433923041,
+      "diff": -0.0031174930143731405
+    },
+    "centered_cosine": {
+      "remembered": 0.012257097463043848,
+      "forgotten": 0.018700482981623454,
+      "diff": -0.006443385518579606
+    },
+    "true_word_rank": {
+      "remembered": 292.75401069518716,
+      "forgotten": 283.8688946015424,
+      "diff": 8.88511609364474
+    },
+    "true_word_percentile": {
+      "remembered": 0.49260172053010925,
+      "forgotten": 0.5080540963451436,
+      "diff": -0.015452375815034392
+    },
+    "top1_correct": {
+      "remembered": 0.0,
+      "forgotten": 0.0,
+      "diff": 0.0
+    },
+    "top5_correct": {
+      "remembered": 0.0106951871657754,
+      "forgotten": 0.012853470437017995,
+      "diff": -0.0021582832712425948
+    },
+    "top10_correct": {
+      "remembered": 0.0106951871657754,
+      "forgotten": 0.02313624678663239,
+      "diff": -0.01244105962085699
+    },
+    "centered_true_word_rank": {
+      "remembered": 267.7914438502674,
+      "forgotten": 256.46529562982005,
+      "diff": 11.326148220447351
+    },
+    "centered_true_word_percentile": {
+      "remembered": 0.5360148802604046,
+      "forgotten": 0.5557125293394434,
+      "diff": -0.019697649079038815
+    },
+    "centered_top1_correct": {
+      "remembered": 0.0,
+      "forgotten": 0.0,
+      "diff": 0.0
+    },
+    "centered_top5_correct": {
+      "remembered": 0.0,
+      "forgotten": 0.002570694087403599,
+      "diff": -0.002570694087403599
+    },
+    "centered_top10_correct": {
+      "remembered": 0.0106951871657754,
+      "forgotten": 0.010282776349614395,
+      "diff": 0.0004124108161610053
+    }
+  },
+  "real_vs_shuffled": {
+    "true_word_rank": {
+      "real": 286.75347222222223,
+      "shuffled": 288.1701388888889
+    },
+    "true_word_percentile": {
+      "real": 0.5030374396135265,
+      "shuffled": 0.5005736714975845
+    },
+    "top1_correct": {
+      "real": 0.0,
+      "shuffled": 0.001736111111111111
+    },
+    "top5_correct": {
+      "real": 0.012152777777777778,
+      "shuffled": 0.005208333333333333
+    },
+    "top10_correct": {
+      "real": 0.019097222222222224,
+      "shuffled": 0.017361111111111112
+    },
+    "centered_true_word_rank": {
+      "real": 260.1423611111111,
+      "shuffled": 284.86805555555554
+    },
+    "centered_true_word_percentile": {
+      "real": 0.5493176328502415,
+      "shuffled": 0.5063164251207729
+    },
+    "centered_top1_correct": {
+      "real": 0.0,
+      "shuffled": 0.001736111111111111
+    },
+    "centered_top5_correct": {
+      "real": 0.001736111111111111,
+      "shuffled": 0.008680555555555556
+    },
+    "centered_top10_correct": {
+      "real": 0.010416666666666666,
+      "shuffled": 0.015625
+    }
+  },
+  "n_recalled": 187,
+  "n_forgotten": 389,
+  "timestamp_utc": "2026-07-05T02:51:20.178318+00:00",
+  "disclaimer": "Smoke test only. Single subject. No mixed-effects model, no significance testing. Not final inference."
+}

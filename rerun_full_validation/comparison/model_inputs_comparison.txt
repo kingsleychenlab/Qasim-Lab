@@ -1,0 +1,9 @@
+  session      X_shape     Y_shape  tmeta_rows  X_ok  Y_ok  no_nan  no_inf  no_zero_rows    X_mean    X_std  Xnorm_min  Xnorm_mean  Xnorm_max  recalled_sum  X_vs_current_bitexact
+LTP269/12 (576, 32250) (576, 1024)         576  True  True    True    True          True -0.002292 0.005331   0.742483    1.035680   1.249791           187                   True
+LTP269/20 (576, 32250) (576, 1024)         576  True  True    True    True          True -0.004833 0.010500   0.316856    1.967745   2.581957           186                   True
+ LTP293/5 (576, 32250) (576, 1024)         576  True  True    True    True          True -0.015023 0.026139   2.946567    5.331296   6.590817           285                   True
+LTP293/22 (576, 32250) (576, 1024)         576  True  True    True    True          True -0.004437 0.009551   0.702196    1.843309   2.377244           266                   True
+ LTP299/2 (576, 32250) (576, 1024)         576  True  True    True    True          True -0.001196 0.005100   0.145251    0.927060   1.309504           329                   True
+ LTP299/6 (576, 32250) (576, 1024)         576  True  True    True    True          True  0.001158 0.012569   0.567989    2.222384   2.733525           282                   True
+LTP303/10 (576, 32250) (576, 1024)         576  True  True    True    True          True -0.004968 0.033131   5.318343    6.012587   6.262216           386                   True
+LTP303/22 (576, 32250) (576, 1024)         576  True  True    True    True          True -0.008189 0.014036   1.216137    2.845438   3.746187           502                   True

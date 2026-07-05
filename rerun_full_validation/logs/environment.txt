@@ -1,0 +1,15 @@
+REPRODUCIBILITY RERUN — ENVIRONMENT
+==================================================
+timestamp_utc : 2026-07-05T02:50:28.216073+00:00
+python        : 3.14.4
+platform      : macOS-14.3-arm64-arm-64bit-Mach-O
+numpy         : 2.5.1
+pandas        : 3.0.3
+scikit-learn  : 1.9.0
+scipy         : 1.18.0
+mne           : 1.12.1
+statsmodels   : 0.14.6
+torch (T5 env): 2.12.1
+seeds         : CV KFold random_state=42; shuffled-control seed 2024; numpy 42
+
+git_commit    : 0cb814b650e8ec72092b1541483d49a769a45f8e

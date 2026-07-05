@@ -1,0 +1,16 @@
+session: LTP303/22
+X_shape: (576, 32250)
+Y_shape: (576, 1024)
+tmeta_rows: 576
+X_ok: True
+Y_ok: True
+no_nan: True
+no_inf: True
+no_zero_rows: True
+X_mean: -0.008188542909920216
+X_std: 0.0140359653159976
+Xnorm_min: 1.2161368131637573
+Xnorm_mean: 2.8454384803771973
+Xnorm_max: 3.7461869716644287
+recalled_sum: 502
+X_vs_current_bitexact: True

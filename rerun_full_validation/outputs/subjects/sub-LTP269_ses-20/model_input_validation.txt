@@ -1,0 +1,16 @@
+session: LTP269/20
+X_shape: (576, 32250)
+Y_shape: (576, 1024)
+tmeta_rows: 576
+X_ok: True
+Y_ok: True
+no_nan: True
+no_inf: True
+no_zero_rows: True
+X_mean: -0.00483329501003027
+X_std: 0.010499989613890648
+Xnorm_min: 0.31685560941696167
+Xnorm_mean: 1.967745304107666
+Xnorm_max: 2.5819571018218994
+recalled_sum: 186
+X_vs_current_bitexact: True
