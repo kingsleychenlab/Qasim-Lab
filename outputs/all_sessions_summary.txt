@@ -1,0 +1,107 @@
+==========================================================================
+MULTI-SESSION ltpFR2 SCALING (session term enabled; NOT final model)
+==========================================================================
+scanning OpenNeuro S3 for task-ltpFR2 sessions (metadata only) ...
+scanned 63 pages; 2441 sessions; 71 subjects. Selecting 4 subjects x up to 2 valid sessions ...
+  sub-LTP269: ['ses-20', 'ses-12']
+  sub-LTP303: ['ses-22', 'ses-10']
+  sub-LTP293: ['ses-22', 'ses-5']
+  sub-LTP299: ['ses-6', 'ses-2']
+
+selected 8 sessions across 4 subjects:
+  sub-LTP269/ses-20
+  sub-LTP269/ses-12
+  sub-LTP303/ses-22
+  sub-LTP303/ses-10
+  sub-LTP293/ses-22
+  sub-LTP293/ses-5
+  sub-LTP299/ses-6
+  sub-LTP299/ses-2
+
+[1/8] === sub-LTP269/ses-20 ===
+    reuse existing -> outputs/subjects/sub-LTP269_ses-20/fidelity_results_corrected.csv
+
+[2/8] === sub-LTP269/ses-12 ===
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python download_one_session.py --sub LTP269 --ses 12 --task ltpFR2
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python create_encoding_trials.py --events /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP269/ses-12/eeg/sub-LTP269_ses-12_task-ltpFR2_events.tsv --eeg /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP269/ses-12/eeg/sub-LTP269_ses-12_task-ltpFR2_eeg.edf --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/encoding_trials.csv --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/encoding_trials_summary.txt
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python build_trial_targets.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/encoding_trials.csv --out-y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/Y_t5.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/target_metadata.json --out-map /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/trial_targets_metadata.csv
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python extract_eeg_features.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/encoding_trials.csv --out-x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/X_eeg.npy --out-meta-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/trial_metadata.csv --out-meta-json /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/eeg_feature_metadata.json
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python ridge_corrected_metrics.py --x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/X_eeg.npy --y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/Y_t5.npy --meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/trial_metadata.csv --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/fidelity_results_corrected.csv --out-pred /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/predicted_embeddings_corrected.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/ridge_corrected_metadata.json --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP269_ses-12/ridge_corrected_summary.txt
+    OK -> outputs/subjects/sub-LTP269_ses-12/fidelity_results_corrected.csv
+
+[3/8] === sub-LTP303/ses-22 ===
+    reuse existing -> outputs/subjects/sub-LTP303_ses-22/fidelity_results_corrected.csv
+
+[4/8] === sub-LTP303/ses-10 ===
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python download_one_session.py --sub LTP303 --ses 10 --task ltpFR2
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python create_encoding_trials.py --events /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP303/ses-10/eeg/sub-LTP303_ses-10_task-ltpFR2_events.tsv --eeg /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP303/ses-10/eeg/sub-LTP303_ses-10_task-ltpFR2_eeg.edf --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/encoding_trials.csv --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/encoding_trials_summary.txt
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python build_trial_targets.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/encoding_trials.csv --out-y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/Y_t5.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/target_metadata.json --out-map /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/trial_targets_metadata.csv
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python extract_eeg_features.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/encoding_trials.csv --out-x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/X_eeg.npy --out-meta-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/trial_metadata.csv --out-meta-json /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/eeg_feature_metadata.json
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python ridge_corrected_metrics.py --x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/X_eeg.npy --y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/Y_t5.npy --meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/trial_metadata.csv --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/fidelity_results_corrected.csv --out-pred /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/predicted_embeddings_corrected.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/ridge_corrected_metadata.json --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP303_ses-10/ridge_corrected_summary.txt
+    OK -> outputs/subjects/sub-LTP303_ses-10/fidelity_results_corrected.csv
+
+[5/8] === sub-LTP293/ses-22 ===
+    reuse existing -> outputs/subjects/sub-LTP293_ses-22/fidelity_results_corrected.csv
+
+[6/8] === sub-LTP293/ses-5 ===
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python download_one_session.py --sub LTP293 --ses 5 --task ltpFR2
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python create_encoding_trials.py --events /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP293/ses-5/eeg/sub-LTP293_ses-5_task-ltpFR2_events.tsv --eeg /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP293/ses-5/eeg/sub-LTP293_ses-5_task-ltpFR2_eeg.edf --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/encoding_trials.csv --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/encoding_trials_summary.txt
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python build_trial_targets.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/encoding_trials.csv --out-y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/Y_t5.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/target_metadata.json --out-map /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/trial_targets_metadata.csv
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python extract_eeg_features.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/encoding_trials.csv --out-x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/X_eeg.npy --out-meta-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/trial_metadata.csv --out-meta-json /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/eeg_feature_metadata.json
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python ridge_corrected_metrics.py --x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/X_eeg.npy --y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/Y_t5.npy --meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/trial_metadata.csv --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/fidelity_results_corrected.csv --out-pred /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/predicted_embeddings_corrected.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/ridge_corrected_metadata.json --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP293_ses-5/ridge_corrected_summary.txt
+    OK -> outputs/subjects/sub-LTP293_ses-5/fidelity_results_corrected.csv
+
+[7/8] === sub-LTP299/ses-6 ===
+    reuse existing -> outputs/subjects/sub-LTP299_ses-6/fidelity_results_corrected.csv
+
+[8/8] === sub-LTP299/ses-2 ===
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python download_one_session.py --sub LTP299 --ses 2 --task ltpFR2
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python create_encoding_trials.py --events /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv --eeg /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/encoding_trials.csv --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/encoding_trials_summary.txt
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python build_trial_targets.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/encoding_trials.csv --out-y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/Y_t5.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/target_metadata.json --out-map /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/trial_targets_metadata.csv
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python extract_eeg_features.py --trials /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/encoding_trials.csv --out-x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/X_eeg.npy --out-meta-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/trial_metadata.csv --out-meta-json /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/eeg_feature_metadata.json
+    $ /Users/kingsley/Desktop/Neurolab/venv/bin/python ridge_corrected_metrics.py --x /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/X_eeg.npy --y /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/Y_t5.npy --meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/trial_metadata.csv --out-csv /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/fidelity_results_corrected.csv --out-pred /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/predicted_embeddings_corrected.npy --out-meta /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/ridge_corrected_metadata.json --out-summary /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/ridge_corrected_summary.txt
+    OK -> outputs/subjects/sub-LTP299_ses-2/fidelity_results_corrected.csv
+
+combined -> outputs/all_sessions_fidelity_results.csv  (4608 rows)
+
+==========================================================================
+EXPANDED TABLE VALIDATION
+==========================================================================
+[PASS] multiple subjects -- 4
+[PASS] multiple sessions per subject (>=1 subject with >=2 sessions) -- 4 subject(s) with >=2 sessions
+[PASS] no NaN
+[PASS] no Inf in numeric cols
+[PASS] recalled only 0/1 -- [0, 1]
+[PASS] every row has subject/session/word/recalled/embedding_fidelity
+[PASS] embedding_fidelity == raw_cosine
+[PASS] true_word_percentile in [0,1]
+[PASS] centered_true_word_percentile in [0,1]
+
+--- expanded table summary ---
+number of subjects : 4
+number of sessions : 8
+subjects with >=2 sessions: 4
+sessions per subject:
+   LTP269: 2 sessions [12, 20]
+   LTP293: 2 sessions [5, 22]
+   LTP299: 2 sessions [2, 6]
+   LTP303: 2 sessions [10, 22]
+total trials       : 4608
+recalled           : 2423
+forgotten          : 2185
+recall rate        : 0.526
+
+--- mean embedding_fidelity (raw_cosine) & centered_true_word_percentile by subject/session ---
+                   n  embedding_fidelity  centered_true_word_percentile
+subject session                                                        
+LTP269  12       576              0.8477                         0.5493
+        20       576              0.8454                         0.5182
+LTP293  5        576              0.8468                         0.5354
+        22       576              0.8467                         0.5113
+LTP299  2        576              0.8474                         0.5071
+        6        576              0.8470                         0.4971
+LTP303  10       576              0.8457                         0.5390
+        22       576              0.8467                         0.5392
+
+*** EXPANDED MULTI-SESSION TABLE READY. Session term now estimable. NOT the final mixed-effects model. ***
+STATUS: OK

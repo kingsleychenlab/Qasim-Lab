@@ -1,0 +1,65 @@
+==========================================================================
+CORRECTED DECODING SMOKE TEST — single subject LTP293/ses-5
+(NOT final inference; no mixed-effects; word-specific metrics)
+==========================================================================
+X (576, 32250)  Y (576, 1024)  candidates (576, 1024)  trials 576
+alpha=10000.0 folds=5 seed=42 shuffle_seed=2024 solver=svd
+
+[real] running out-of-fold ridge ...
+[shuffled] running negative control (Y permuted across trials, same folds) ...
+
+=== VALIDATION ===
+[PASS] fidelity_results_corrected has 576 rows -- 576
+[PASS] predicted_embeddings_corrected shape 576 x 1024 -- (576, 1024)
+[PASS] no NaN/Inf in predictions
+[PASS] no NaN/Inf anywhere in results
+[PASS] every trial predicted exactly once -- unique counts=[1]
+[PASS] true_word_rank in [1, 576] -- min 1 max 576
+[PASS] centered_true_word_rank in [1, 576] -- min 3 max 570
+[PASS] true_word_percentile in [0, 1] -- min 0.0000 max 1.0000
+[PASS] centered_true_word_percentile in [0, 1] -- min 0.0104 max 0.9965
+[PASS] top1_correct is 0/1 -- values=[0, 1]
+[PASS] top5_correct is 0/1 -- values=[0, 1]
+[PASS] top10_correct is 0/1 -- values=[0, 1]
+[PASS] centered_top1_correct is 0/1 -- values=[0]
+[PASS] centered_top5_correct is 0/1 -- values=[0, 1]
+[PASS] centered_top10_correct is 0/1 -- values=[0, 1]
+
+=== REMEMBERED vs FORGOTTEN (real labels) ===
+n recalled=285  n forgotten=291
+metric                            remembered   forgotten   rem-forg
+raw_cosine                            0.8453      0.8482    -0.0029
+centered_cosine                       0.0077      0.0175    -0.0098
+true_word_rank                      299.2596    279.0722   +20.1875
+true_word_percentile                  0.4813      0.5164    -0.0351
+top1_correct                          0.0000      0.0034    -0.0034
+top5_correct                          0.0070      0.0137    -0.0067
+top10_correct                         0.0211      0.0206    +0.0004
+centered_true_word_rank             273.1193    263.2268    +9.8925
+centered_true_word_percentile         0.5267      0.5440    -0.0172
+centered_top1_correct                 0.0000      0.0000    +0.0000
+centered_top5_correct                 0.0000      0.0034    -0.0034
+centered_top10_correct                0.0000      0.0172    -0.0172
+
+=== REAL vs SHUFFLED-LABEL CONTROL (retrieval, all trials) ===
+chance: mean rank ~288.5, mean percentile ~0.5, top1 ~0.0017, top5 ~0.0087, top10 ~0.0174
+metric                                  real    shuffled
+true_word_rank                      289.0608    285.4549
+true_word_percentile                  0.4990      0.5053
+top1_correct                          0.0017      0.0017
+top5_correct                          0.0104      0.0139
+top10_correct                         0.0208      0.0208
+centered_true_word_rank             268.1215    278.4722
+centered_true_word_percentile         0.5354      0.5174
+centered_top1_correct                 0.0000      0.0035
+centered_top5_correct                 0.0017      0.0104
+centered_top10_correct                0.0087      0.0208
+
+wrote:
+  outputs/subjects/sub-LTP293_ses-5/fidelity_results_corrected.csv
+  outputs/subjects/sub-LTP293_ses-5/predicted_embeddings_corrected.npy
+  outputs/subjects/sub-LTP293_ses-5/ridge_corrected_metadata.json
+  outputs/subjects/sub-LTP293_ses-5/ridge_corrected_summary.txt
+
+*** SINGLE-SUBJECT CORRECTED DECODING SMOKE TEST — not final inference, no mixed-effects. ***
+STATUS: OK

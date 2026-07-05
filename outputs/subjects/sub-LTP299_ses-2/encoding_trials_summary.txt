@@ -1,0 +1,104 @@
+
+==============================================================================
+ENCODING-TRIALS BUILD + VALIDATION
+==============================================================================
+event file : /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+eeg file   : /Users/kingsley/Desktop/Neurolab/data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf
+
+==============================================================================
+COUNTS
+==============================================================================
+WORD events     : 576
+REC_WORD events : 339
+all WORD events have item_num.
+all REC_WORD events have item_num.
+note: 1 REC_WORD events are intrusions/vocalizations (item_num == -1); these never match a presented WORD.
+
+==============================================================================
+RECALL SUMMARY
+==============================================================================
+encoding trials (rows) : 576
+recalled (1)           : 329
+forgotten (0)          : 247
+recall rate            : 0.5712
+unique trials/lists    : 24  -> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+words per trial:
+   trial   1 : 24 words
+   trial   2 : 24 words
+   trial   3 : 24 words
+   trial   4 : 24 words
+   trial   5 : 24 words
+   trial   6 : 24 words
+   trial   7 : 24 words
+   trial   8 : 24 words
+   trial   9 : 24 words
+   trial  10 : 24 words
+   trial  11 : 24 words
+   trial  12 : 24 words
+   trial  13 : 24 words
+   trial  14 : 24 words
+   trial  15 : 24 words
+   trial  16 : 24 words
+   trial  17 : 24 words
+   trial  18 : 24 words
+   trial  19 : 24 words
+   trial  20 : 24 words
+   trial  21 : 24 words
+   trial  22 : 24 words
+   trial  23 : 24 words
+   trial  24 : 24 words
+
+==============================================================================
+FIRST 20 ROWS
+==============================================================================
+subject  session  trial  serialpos      word  item_num   onset  sample  recalled                                                                eeg_file                                                                 event_file
+ LTP299        2      1          1  TROMBONE      1508 410.478  205239         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          2    FIDDLE       561 412.936  206468         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          3    PARENT      1013 415.506  207753         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          4   CEILING       265 417.856  208928         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          5      SMOG      1330 420.200  210100         0 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          6  SCRIBBLE      1256 422.884  211442         0 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          7   SUSPECT      1415 425.420  212710         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          8      HERO       706 427.914  213957         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1          9     NURSE       963 430.482  215241         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         10      GIRL       637 433.102  216551         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         11      RUST      1219 435.592  217796         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         12   FLIPPER       580 437.938  218969         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         13     FLEET       578 440.382  220191         0 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         14     GUARD       667 442.758  221379         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         15      TAXI      1438 445.314  222657         0 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         16   FRECKLE       602 448.014  224007         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         17    SUMMIT      1405 450.618  225309         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         18 LIGHTNING       820 453.172  226586         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         19     CLOUD       328 455.840  227920         1 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+ LTP299        2      1         20   KLEENEX       782 458.282  229141         0 data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv
+
+==============================================================================
+VALIDATION CHECKS
+==============================================================================
+[PASS] no missing word -- 0 missing
+[PASS] no missing onset -- 0 missing
+[PASS] no missing sample -- 0 missing
+[PASS] all WORD events have VALID EEG timing (onset>0 & sample>=0) -- 576/576 valid (100.0%); 0 rows have sentinel onset<=0/sample<0
+[PASS] all WORD events have a full EEG window [300-800ms] inside the recording (n_times=2551000, sfreq=500) -- 576/576 fit; 0 exceed EDF length
+[PASS] recalled is only 0 or 1 -- values=[0, 1]
+[PASS] no duplicate subject/session/trial/serialpos -- 0 duplicate rows
+[PASS] recalled matches agree on item_name (backup key) -- 0 mismatches
+
+==============================================================================
+PEERS WORD-LIST CROSS-CHECK
+==============================================================================
+peers list size            : 576
+encoding rows              : 576
+rows whose word IS in peers: 576 (100.0%)
+unique session words       : 576
+unique words NOT in peers  : 0
+[PASS] every word exists in peers_word_order.csv
+
+==============================================================================
+RESULT
+==============================================================================
+wrote 576 rows -> /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/encoding_trials.csv
+summary -> /Users/kingsley/Desktop/Neurolab/outputs/subjects/sub-LTP299_ses-2/encoding_trials_summary.txt
+errors: 0   warnings: 0
+STATUS: OK (warnings are informational; no rows dropped).
