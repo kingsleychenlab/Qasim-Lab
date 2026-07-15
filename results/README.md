@@ -81,8 +81,8 @@ method, not a positive finding.
 | `final_results_4subjects.md` | Detailed write-up of the original 4-subject run |
 | `methods_and_math.md` | Methods and the math behind each stage |
 | `embeddings/` | The T5 embedding deliverables (below) |
-| `figures/` | 10 figures (fidelity distributions, odds ratios, chance checks, pipeline) |
-| `tables/` | Model outputs and the trial-level fidelity table |
+| `figures/` | 6 figures, one per question a reader asks (below) |
+| `tables/` | Model outputs and the trial-level fidelity tables |
 | `summaries/` | Per-run model summaries (4 / 16 / 32 subjects) |
 | `validation/` | Audits and independent reproducibility reruns |
 
@@ -99,6 +99,21 @@ method, not a positive finding.
 Built with `google-t5/t5-large`, `T5EncoderModel` (encoder, **not** decoder),
 middle encoder layer `hidden_states[12]`, subword tokens averaged, EOS and pad
 excluded.
+
+### `figures/` — one figure per question
+
+| Figure | Question it answers |
+| --- | --- |
+| `pipeline_flow.png` | What is the method? |
+| `remembered_vs_forgotten_fidelity.png` | Do remembered and forgotten words differ? (no — near-identical) |
+| `decoding_chance_check.png` | Is the decoder doing anything? (no — retrieval sits at chance) |
+| `raw_vs_centered_metrics.png` | Why is raw cosine high? (common-direction artifact) |
+| `final_model_odds_ratios.png` | Does the model back that up? (all intervals span OR = 1) |
+| `scaling_progression.png` | Does more data change it? (OR → 1.0 as intervals tighten) |
+
+Figures and the `*_32subjects` tables are rendered from the **32-subject**
+headline run by `code/step13_build_results_package.py`, which reads only the
+committed tables in `tables/` (re-runnable on a fresh clone).
 
 ### `validation/`
 

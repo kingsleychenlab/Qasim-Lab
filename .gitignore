@@ -1,5 +1,6 @@
-# Virtual environment
+# Virtual environments
 venv/
+.venv/
 
 # Raw dataset — never commit (ds004395 is 8.7 TB upstream)
 data/

@@ -30,6 +30,7 @@ import torch
 from tqdm import tqdm
 from transformers import T5EncoderModel, T5Tokenizer
 
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXPECTED_WORDS = 576
 EXPECTED_DIM = 1024
 
@@ -115,11 +116,11 @@ def resolve_middle_layer(model, requested_layer):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", default="results/embeddings/peers_words.csv")
-    parser.add_argument("--out-matrix", default="results/embeddings/peers_t5large_embeddings.npy")
-    parser.add_argument("--out-order", default="results/embeddings/peers_word_order.csv")
-    parser.add_argument("--out-csv", default="results/embeddings/peers_t5large_embeddings.csv")
-    parser.add_argument("--out-metadata", default="results/embeddings/embedding_metadata.json")
+    parser.add_argument("--input", default=os.path.join(HERE, "results/embeddings/peers_words.csv"))
+    parser.add_argument("--out-matrix", default=os.path.join(HERE, "results/embeddings/peers_t5large_embeddings.npy"))
+    parser.add_argument("--out-order", default=os.path.join(HERE, "results/embeddings/peers_word_order.csv"))
+    parser.add_argument("--out-csv", default=os.path.join(HERE, "results/embeddings/peers_t5large_embeddings.csv"))
+    parser.add_argument("--out-metadata", default=os.path.join(HERE, "results/embeddings/embedding_metadata.json"))
     parser.add_argument("--model", default="google-t5/t5-large")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument(
