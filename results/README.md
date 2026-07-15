@@ -1,63 +1,111 @@
-# AI Word-Embedding Fidelity and Memory
+# Results — AI Word-Embedding Fidelity and Memory
 
-A complete, audited **negative-result** research pipeline testing whether the
-brain's response to a word — as decoded into a large language model's word
-embedding — predicts whether that word is later remembered.
+**Question.** When a subject studies a word, is that word more likely to be
+remembered if the EEG pattern during encoding more accurately predicts the AI
+(T5-large) embedding of that word?
 
-## Goal
+**Answer.** No. Across 4, 16, and 32 subjects, embedding fidelity was **not**
+significantly associated with later recall. The null held at every scale.
 
-Test one prediction: **do words whose EEG encoding response can be decoded more
-faithfully into their T5 language-model embedding get remembered more often?**
-Concretely, does trial-level *embedding fidelity* (how well ridge regression
-maps 300–800 ms of EEG onto the word's T5 vector) predict free recall?
-
-## Dataset
-
-**PEERS / OpenNeuro [ds004395](https://openneuro.org/datasets/ds004395)** —
-the Penn Electrophysiology of Encoding and Retrieval Study. We use the
-**task-ltpFR2** experiment, whose 576-word pool matches the T5 embedding list
-exactly. EEG is 128–129 channel EGI, 500 Hz, stored as EDF. Only validated
-sessions were used (see `audit_report.md`).
-
-## Pipeline summary
+Dataset: PEERS / OpenNeuro [ds004395](https://openneuro.org/datasets/ds004395)
+v2.0.0, `task-ltpFR2` (its 576-word pool matches the T5 embedding list exactly).
+EEG is 128–129 channel EGI, 500 Hz. Code: [`../code/`](../code/).
 
 ```
-word appears  →  T5-large embedding (1024-d)  →  EEG 300–800 ms after onset
-              →  ridge regression predicts the embedding  →  cosine fidelity
-              →  logistic mixed-effects memory model (recalled ~ fidelity + …)
+word appears  →  EEG during encoding  →  predicted T5 embedding
+              →  compare to true embedding  →  does similarity predict recall?
 ```
 
-- **T5 target**: middle-layer (`hidden_states[12]`) encoder representation,
-  averaged over subword tokens, EOS/pad excluded → 576 × 1024 matrix.
-- **EEG feature**: raw 300–800 ms window (129 channels × 250 timepoints = 32,250
-  features) per word, sample-based extraction, no filtering/baseline/resampling.
-- **Ridge**: within each subject/session, `alpha = 10000`, held-out-trial 5-fold
-  CV, standardization fit on training folds only.
-- **Fidelity**: cosine similarity between predicted and true T5 embedding.
-- **Memory model**: `recalled ~ embedding_fidelity + session + (1|subject) +
-  (1|word)`, logistic (binary outcome).
+## Headline result — 32 subjects, 64 sessions, 36,864 trials
 
-## Final conclusion
+Model: `recalled ~ embedding_fidelity + session + (1|subject) + (1|word)`
+(logistic mixed-effects; fidelity z-scored, so the odds ratio is per 1 SD).
 
-**The key prediction was not supported in this analysis.** In the final outline
-model, embedding fidelity did not predict recall (odds ratio 0.971 per 1 SD,
-95% interval [0.913, 1.033], p ≈ 0.354). Remembered and forgotten words had
-essentially identical mean fidelity (0.84627 vs 0.84711).
+| Quantity | Value |
+| --- | --- |
+| odds ratio (per 1 SD) | **0.986** |
+| 95% interval | **[0.963, 1.009]** — includes 1.0 |
+| p-value | 0.218 |
+| remembered mean fidelity | 0.84501 |
+| forgotten mean fidelity | 0.84553 |
+| difference (rem − forg) | −0.00052 |
 
-Importantly, raw cosine fidelity is **inflated by a common embedding direction**
-(all T5 vectors share a dominant direction and have large norms), so a high
-absolute cosine (~0.85) does **not** indicate successful word decoding. When
-measured with word-specific metrics (true-word rank / retrieval percentile), and
-against a shuffled-label control, **word-specific decoding was at chance**
-across all sessions. A null memory effect is therefore the expected, honest
-outcome.
+## The null is robust to scale
 
-## What this is
+Only the number of subjects changed between runs; the pipeline was identical.
 
-This is a **complete audited research pipeline that reports a negative result**.
-Every stage — T5 embeddings, recall-label derivation, EEG extraction, decoding
-metrics, and the mixed-effects model — was independently validated (see
-`audit_report.md`). The value is a trustworthy, reproducible end-to-end method
-and an honest null, not a positive finding.
+| | 4 subj | 16 subj | 32 subj |
+| --- | --- | --- | --- |
+| sessions | 8 | 32 | 64 |
+| trials | 4,608 | 18,432 | 36,864 |
+| odds ratio | 0.971 | 0.979 | 0.986 |
+| 95% interval | [0.913, 1.033] | [0.947, 1.013] | [0.963, 1.009] |
+| p-value | 0.354 | 0.220 | 0.218 |
+| conclusion | no effect | no effect | no effect |
 
-See `results_index.md` for a guide to every file in this folder.
+As subjects increase, the odds ratio drifts **toward 1.0** and the interval
+narrows while staying centred on 1.0. More data sharpened the estimate onto
+"no effect" rather than uncovering one.
+
+## The important caveat
+
+**Word-specific decoding was at chance** in all three runs:
+
+| Check | Real | Shuffled-label control | Chance |
+| --- | --- | --- | --- |
+| true-word percentile | 0.4975 | 0.5011 | 0.50 |
+| top-5 retrieval | 0.0074 | 0.0088 | ~0.0087 |
+| top-10 retrieval | 0.0164 | 0.0180 | ~0.0174 |
+
+Real performance matches the shuffled-label control, and the high raw cosine
+(~0.845) is an artifact of a **common embedding direction** shared by all T5
+vectors — not evidence of word decoding.
+
+So the bottleneck is the **decoding stage, not the sample size**. Raw broadband
+300–800 ms EEG with linear ridge cannot decode word identity above chance, so
+there is no reliable fidelity signal for a memory effect to build on. Adding
+subjects cannot rescue a signal that is not there. Strengthening the decoder —
+the reference paper's EEG preprocessing and longer (~3 s) window, richer
+time-frequency features, or a neural decoder — must come **before** re-testing
+the memory question.
+
+A null is therefore the expected, honest outcome here, and it is reported as
+such: the value of this project is a trustworthy, reproducible end-to-end
+method, not a positive finding.
+
+## What's here
+
+| Path | Contents |
+| --- | --- |
+| `summary_4_vs_16_vs_32_subjects.txt` | **Start here** — canonical write-up of all three runs |
+| `final_results_4subjects.md` | Detailed write-up of the original 4-subject run |
+| `methods_and_math.md` | Methods and the math behind each stage |
+| `embeddings/` | The T5 embedding deliverables (below) |
+| `figures/` | 10 figures (fidelity distributions, odds ratios, chance checks, pipeline) |
+| `tables/` | Model outputs and the trial-level fidelity table |
+| `summaries/` | Per-run model summaries (4 / 16 / 32 subjects) |
+| `validation/` | Audits and independent reproducibility reruns |
+
+### `embeddings/` — the T5 stage deliverable
+
+| File | Contents |
+| --- | --- |
+| `peers_t5large_embeddings.npy` | The **576 × 1024** matrix, one row per PEERS word |
+| `peers_word_order.csv` | `word`, `row_index` — the row order of the matrix |
+| `peers_t5large_embeddings.csv` | Same matrix, human-readable |
+| `peers_words.csv` | The 576-word PEERS pool |
+| `embedding_metadata.json` | Model, layer, and token-handling provenance |
+
+Built with `google-t5/t5-large`, `T5EncoderModel` (encoder, **not** decoder),
+middle encoder layer `hidden_states[12]`, subword tokens averaged, EOS and pad
+excluded.
+
+### `validation/`
+
+The result was independently re-derived. `rerun_full_comparison_report.md`
+records a full rerun that reproduced the 4-subject numbers **exactly** (odds
+ratio 0.9714, p 0.3544, verdict PASS). `independent_redo_comparison.txt` is a
+second implementation that trains ridge per *subject* rather than per
+*subject/session* and reaches the same conclusion. `precision_audit.md`,
+`audit_report.md`, and `reproducibility_checklist.md` cover the end-to-end
+structural and numeric audits.

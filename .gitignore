@@ -11,11 +11,14 @@ data/
 *.vhdr
 *.vmrk
 
-# Large generated artifacts (regenerable from the pipeline)
-outputs/subjects/
-outputs/X_eeg.npy
-outputs/Y_t5.npy
-outputs/predicted_embeddings*.npy
+# Pipeline working directory: regenerable by code/, not part of the deliverable.
+# The curated findings are copied into results/.
+outputs/
+
+# Reproducibility rerun working trees. Their verdicts are copied into
+# results/validation/; the bulky intermediates stay local.
+independent_redo/
+rerun_full_validation/
 
 # Python / OS cruft
 __pycache__/

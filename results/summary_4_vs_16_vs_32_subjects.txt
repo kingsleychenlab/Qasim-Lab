@@ -1,0 +1,164 @@
+================================================================================
+AI WORD-EMBEDDING FIDELITY AND MEMORY
+Official summary: 4 vs 16 vs 32 subjects
+================================================================================
+
+THE QUESTION (same for all three runs)
+--------------------------------------------------------------------------------
+When someone studies a word, is it more likely to be remembered if their EEG
+activity during encoding more accurately predicts that word's AI (T5-large)
+embedding? The accuracy is called "embedding fidelity." The prediction being
+tested: remembered words should have HIGHER fidelity than forgotten words.
+
+THE PIPELINE (identical in all three runs)
+--------------------------------------------------------------------------------
+PEERS / OpenNeuro ds004395, ltpFR2 task. For each studied word:
+  - Target: T5-large encoder, middle layer (hidden_states[12]), subword tokens
+    averaged, EOS/pad excluded -> one 1024-dim vector per word.
+  - EEG: 300-800 ms after word onset, 129 channels x 250 timepoints = 32,250
+    features, raw 500 Hz.
+  - Decoding: ridge regression (alpha = 10,000) per subject/session, 5-fold
+    held-out-trial cross-validation, StandardScaler fit on training folds only.
+  - Fidelity: cosine(predicted embedding, true embedding).
+  - Memory model: recalled ~ embedding_fidelity + session + (1|subject) + (1|word)
+    (logistic mixed-effects; fidelity z-scored, so odds ratio is per 1 SD).
+Only the NUMBER OF SUBJECTS changed between runs.
+
+
+--------------------------------------------------------------------------------
+RUN 1 — 4 SUBJECTS
+--------------------------------------------------------------------------------
+Data:
+  - 4 subjects, 8 sessions (2 per subject), 4,608 trials
+  - 2,423 recalled / 2,185 forgotten (recall rate 0.526)
+  - Subjects: LTP269, LTP293, LTP299, LTP303
+
+Main memory model (embedding_fidelity = raw cosine):
+  - odds ratio        : 0.971
+  - 95% interval      : [0.913, 1.033]
+  - p-value           : 0.354
+  - coefficient/SD    : -0.0291
+  - remembered mean   : 0.84627
+  - forgotten mean    : 0.84711
+  - difference        : -0.00084
+
+Word-specific decoding sanity checks:
+  - Retrieval percentile ~0.50 (chance); real performance ~= shuffled-label
+    control. The high raw cosine (~0.847) is inflated by a common embedding
+    direction, not real word decoding.
+
+Takeaway: NULL. Remembered and forgotten words showed no meaningful difference
+in fidelity. Word-specific decoding was at chance. Honest but small-sample.
+
+
+--------------------------------------------------------------------------------
+RUN 2 — 16 SUBJECTS
+--------------------------------------------------------------------------------
+Data:
+  - 16 subjects, 32 sessions (2 per subject), 18,432 trials
+  - 9,980 recalled / 8,452 forgotten (recall rate 0.541)
+  - The 4 original subjects plus 12 more.
+
+Main memory model:
+  - odds ratio        : 0.979
+  - 95% interval      : [0.947, 1.013]
+  - p-value           : 0.220
+  - coefficient/SD    : -0.0211
+  - remembered mean   : 0.84337
+  - forgotten mean    : 0.84367
+  - difference        : -0.00030
+
+Word-specific decoding sanity checks (averaged over 32 sessions):
+  - true-word percentile : real 0.4977  vs  shuffled 0.5011  (chance 0.5)
+  - top-5 retrieval      : real 0.0071  vs  shuffled 0.0088
+  - top-10 retrieval     : real 0.0162  vs  shuffled 0.0184
+
+Takeaway: STILL NULL. With 4x the data the interval tightened but the odds ratio
+stayed ~0.98 (interval still includes 1.0). Word-specific decoding still at
+chance, real ~= shuffled. Adding subjects did not make an effect appear.
+
+
+--------------------------------------------------------------------------------
+RUN 3 — 32 SUBJECTS
+--------------------------------------------------------------------------------
+Data:
+  - 32 subjects, 64 sessions (2 per subject), 36,864 trials
+  - 17,040 recalled / 19,824 forgotten (recall rate 0.462)
+  - The 16 previous subjects plus 16 more.
+
+Main memory model:
+  - odds ratio        : 0.986
+  - 95% interval      : [0.963, 1.009]
+  - p-value           : 0.218
+  - coefficient/SD    : -0.0145
+  - remembered mean   : 0.84501
+  - forgotten mean    : 0.84553
+  - difference        : -0.00052
+
+Word-specific decoding sanity checks (averaged over 64 sessions):
+  - true-word percentile : real 0.4975  vs  shuffled 0.5011  (chance 0.5)
+  - top-5 retrieval      : real 0.0074  vs  shuffled 0.0088
+  - top-10 retrieval     : real 0.0164  vs  shuffled 0.0180
+  - mean true-word rank  : 290.0  (chance 288.5)
+
+Takeaway: STILL NULL, and the estimate is now homing in on exactly "no effect."
+Word-specific decoding remains at chance across all 32 people.
+
+
+================================================================================
+THE DIFFERENCE BETWEEN THE RUNS
+================================================================================
+
+Side-by-side (main model, raw cosine, odds ratio per 1 SD of fidelity):
+
+  quantity            4-subject      16-subject     32-subject
+  subjects                    4              16             32
+  sessions                    8              32             64
+  trials                   4608           18432          36864
+  odds ratio             0.971           0.979          0.986
+  95% interval    [0.913,1.033]   [0.947,1.013]  [0.963,1.009]
+  p-value                0.354           0.220          0.218
+  rem - forg diff     -0.00084        -0.00030       -0.00052
+  conclusion          no effect       no effect      no effect
+
+What changes as subjects increase:
+  1. The odds ratio drifts TOWARD 1.0 (0.971 -> 0.979 -> 0.986). 1.0 means "no
+     effect," so the estimate is converging on exactly no association.
+  2. The confidence interval gets NARROWER and stays CENTERED on 1.0
+     ([0.913,1.033] -> [0.947,1.013] -> [0.963,1.009]). More data = more
+     precision, and the precision confirms "no effect" rather than uncovering one.
+  3. The p-value stays well above 0.05 (0.354, 0.220, 0.218) -- never significant.
+  4. The remembered-minus-forgotten fidelity difference stays tiny and slightly
+     NEGATIVE at every scale (if anything, higher fidelity goes with slightly
+     LESS recall -- the opposite of the prediction, and not significant).
+
+What DOESN'T change:
+  - Word-specific decoding is at chance in all three runs (percentile ~0.50;
+    real ~= shuffled-label control). The model never identifies the correct word
+    above chance.
+  - The high raw cosine (~0.845) is an artifact of the shared embedding direction
+    in all three runs, not evidence of decoding.
+
+What this means:
+  - The null is ROBUST. It held from 4 to 16 to 32 subjects, across 36,864 trials.
+    Scaling did not reveal a hidden effect; it sharpened the estimate onto "no
+    effect."
+  - The bottleneck is the DECODING METHOD, not the sample size. Raw broadband
+    300-800 ms EEG with linear ridge cannot decode word identity above chance, so
+    there is no reliable fidelity signal for a memory effect to build on. Adding
+    people cannot fix a signal that is not there.
+  - To move forward, the decoding stage must be strengthened FIRST -- e.g. the
+    reference paper's EEG preprocessing and longer (~3 s) window, a retrieval /
+    top-k accuracy metric, richer features (time-frequency band power, spatial
+    filtering) or a neural decoder -- and only then re-test the memory question.
+
+
+================================================================================
+FINAL CONCLUSION
+================================================================================
+The project tested whether later-remembered words showed higher EEG-to-AI
+embedding fidelity than forgotten words. Across 4, 16, and 32 subjects, the
+session-aware logistic mixed-effects model did not support this prediction:
+embedding fidelity was not significantly associated with later recall. The result
+is a complete, audited, honest null that grows more robust as the sample grows.
+================================================================================

@@ -1,0 +1,164 @@
+================================================================================
+NEUROLAB FINAL PRECISION AUDIT (programmatic)
+================================================================================
+
+## 1. STRUCTURE
+[PASS] (structure) exists results/embeddings/peers_words.csv -- present  [results/embeddings/peers_words.csv]
+[PASS] (structure) exists results/embeddings/peers_word_order.csv -- present  [results/embeddings/peers_word_order.csv]
+[PASS] (structure) exists results/embeddings/peers_t5large_embeddings.npy -- present  [results/embeddings/peers_t5large_embeddings.npy]
+[PASS] (structure) exists results/embeddings/embedding_metadata.json -- present  [results/embeddings/embedding_metadata.json]
+[PASS] (structure) exists outputs/all_sessions_fidelity_results.csv -- present  [outputs/all_sessions_fidelity_results.csv]
+[PASS] (structure) exists outputs/final_memory_model_summary.txt -- present  [outputs/final_memory_model_summary.txt]
+[PASS] (structure) exists outputs/final_memory_model_results.csv -- present  [outputs/final_memory_model_results.csv]
+[PASS] (structure) exists outputs/final_memory_model_metadata.json -- present  [outputs/final_memory_model_metadata.json]
+[PASS] (structure) exists outputs/recall_label_audit.txt -- present  [outputs/recall_label_audit.txt]
+[PASS] (structure) exists outputs/eeg_extraction_audit.txt -- present  [outputs/eeg_extraction_audit.txt]
+[PASS] (structure) exists results/README.md -- present  [results/README.md]
+[PASS] (structure) exists results/methods_and_math.md -- present  [results/methods_and_math.md]
+[PASS] (structure) exists results/final_results_4subjects.md -- present  [results/final_results_4subjects.md]
+[PASS] (structure) exists results/summary_4_vs_16_vs_32_subjects.txt -- present  [results/summary_4_vs_16_vs_32_subjects.txt]
+[PASS] (structure) exists results/validation/audit_report.md -- present  [results/validation/audit_report.md]
+[PASS] (structure) exists results/validation/precision_audit.md -- present  [results/validation/precision_audit.md]
+[PASS] (structure) exists results/validation/reproducibility_checklist.md -- present  [results/validation/reproducibility_checklist.md]
+[INFO] optional outputs/all_sessions_summary.txt: present
+[INFO] optional outputs/model_input_validation.txt: present
+[INFO] optional outputs/t5_embedding_audit.txt: present
+
+## 2. T5 EMBEDDING INTEGRITY
+[PASS] (t5) peers_words.csv has 576 rows -- 576  [peers_words.csv]
+[PASS] (t5) peers_word_order.csv has 576 rows -- 576  [peers_word_order.csv]
+[PASS] (t5) embeddings shape 576x1024 -- (576, 1024)  [peers_t5large_embeddings.npy]
+[PASS] (t5) row_index is exactly 0..575 -- min 0 max 575  [peers_word_order.csv]
+[PASS] (t5) no NaN -- none
+[PASS] (t5) no Inf -- none
+[PASS] (t5) no all-zero vectors -- min norm 1867.67
+[PASS] (t5) norms plausible/nonzero -- norm min 1867.7 mean 2165.3 max 2609.1
+[PASS] (t5) metadata model google-t5/t5-large -- google-t5/t5-large  [embedding_metadata.json]
+[PASS] (t5) metadata class T5EncoderModel -- T5EncoderModel  [embedding_metadata.json]
+[PASS] (t5) metadata encoder_only True -- True  [embedding_metadata.json]
+[PASS] (t5) metadata layer 12 used -- 12  [embedding_metadata.json]
+[PASS] (t5) metadata EOS excluded -- True
+[PASS] (t5) metadata padding excluded -- True
+[PASS] (t5) metadata shape 576x1024 -- [576, 1024]
+[PASS] (t5) word order consistent (order==embeddings CSV order) -- 576 unique words
+
+## 3. SESSION VALIDITY
+[PASS] (session) 4 subjects -- ['LTP269', 'LTP293', 'LTP299', 'LTP303']
+[PASS] (session) 8 sessions -- 8
+[PASS] (session) 2 sessions per subject -- {'LTP269': 2, 'LTP293': 2, 'LTP299': 2, 'LTP303': 2}
+[PASS] (session) expected subject/session set matches -- [('LTP269', 12), ('LTP269', 20), ('LTP293', 5), ('LTP293', 22), ('LTP299', 2), ('LTP299', 6), ('LTP303', 10), ('LTP303', 22)]
+[PASS] (session) 576 trials per session -- unique sizes [np.int64(576)]
+[PASS] (session) total rows 4608 -- 4608
+[PASS] (session) each session has 576 unique words -- all 576
+[PASS] (session) all words in peers list -- 100.0% in peers
+[PASS] (session) no missing in required cols -- complete
+[PASS] (session) recalled only 0/1 -- [np.int64(0), np.int64(1)]
+[PASS] (session) no NaN/Inf in numeric cols -- clean
+[PASS] (session) recalled/forgotten = 2423/2185 -- 2423/2185
+
+## 4. RECALL LABELS (re-derived from events per session)
+[PASS] (recall) LTP269/12 576/576 labels match -- 576/576  [data/ds004395/sub-LTP269/ses-12/eeg/sub-LTP269_ses-12_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP269/12 no recognition events used -- 0 RECOG_* present, unused
+[PASS] (recall) LTP269/20 576/576 labels match -- 576/576  [data/ds004395/sub-LTP269/ses-20/eeg/sub-LTP269_ses-20_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP269/20 no recognition events used -- 0 RECOG_* present, unused
+[PASS] (recall) LTP293/5 576/576 labels match -- 576/576  [data/ds004395/sub-LTP293/ses-5/eeg/sub-LTP293_ses-5_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP293/5 no recognition events used -- 0 RECOG_* present, unused
+[PASS] (recall) LTP293/22 576/576 labels match -- 576/576  [data/ds004395/sub-LTP293/ses-22/eeg/sub-LTP293_ses-22_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP293/22 no recognition events used -- 0 RECOG_* present, unused
+[PASS] (recall) LTP299/2 576/576 labels match -- 576/576  [data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP299/2 no recognition events used -- 0 RECOG_* present, unused
+[PASS] (recall) LTP299/6 576/576 labels match -- 576/576  [data/ds004395/sub-LTP299/ses-6/eeg/sub-LTP299_ses-6_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP299/6 no recognition events used -- 0 RECOG_* present, unused
+[PASS] (recall) LTP303/10 576/576 labels match -- 576/576  [data/ds004395/sub-LTP303/ses-10/eeg/sub-LTP303_ses-10_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP303/10 no recognition events used -- 0 RECOG_* present, unused
+[PASS] (recall) LTP303/22 576/576 labels match -- 576/576  [data/ds004395/sub-LTP303/ses-22/eeg/sub-LTP303_ses-22_task-ltpFR2_events.tsv]
+[PASS] (recall) LTP303/22 no recognition events used -- 0 RECOG_* present, unused
+
+## 5. EEG EXTRACTION (re-extract from EDF per session)
+[PASS] (eeg) LTP269/12 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP269/ses-12/eeg/sub-LTP269_ses-12_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP269/12 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP269/12 no NaN/Inf, no all-zero rows -- clean
+[PASS] (eeg) LTP269/20 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP269/ses-20/eeg/sub-LTP269_ses-20_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP269/20 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP269/20 no NaN/Inf, no all-zero rows -- clean
+[PASS] (eeg) LTP293/5 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP293/ses-5/eeg/sub-LTP293_ses-5_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP293/5 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP293/5 no NaN/Inf, no all-zero rows -- clean
+[PASS] (eeg) LTP293/22 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP293/ses-22/eeg/sub-LTP293_ses-22_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP293/22 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP293/22 no NaN/Inf, no all-zero rows -- clean
+[PASS] (eeg) LTP299/2 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP299/ses-2/eeg/sub-LTP299_ses-2_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP299/2 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP299/2 no NaN/Inf, no all-zero rows -- clean
+[PASS] (eeg) LTP299/6 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP299/ses-6/eeg/sub-LTP299_ses-6_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP299/6 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP299/6 no NaN/Inf, no all-zero rows -- clean
+[PASS] (eeg) LTP303/10 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP303/ses-10/eeg/sub-LTP303_ses-10_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP303/10 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP303/10 no NaN/Inf, no all-zero rows -- clean
+[PASS] (eeg) LTP303/22 sfreq=500 & 129 ch & X 576x32250 -- sfreq=500.0 ch=129 X=(576, 32250)  [data/ds004395/sub-LTP303/ses-22/eeg/sub-LTP303_ses-22_task-ltpFR2_eeg.edf]
+[PASS] (eeg) LTP303/22 sampled rows bit-exact vs EDF (float32) -- worst diff 0.00e+00, in_bounds=True
+[PASS] (eeg) LTP303/22 no NaN/Inf, no all-zero rows -- clean
+
+## 6. RIDGE / DECODING CONFIG
+[PASS] (ridge) LTP269/12 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) LTP269/20 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) LTP293/5 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) LTP293/22 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) LTP299/2 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) LTP299/6 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) LTP303/10 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) LTP303/22 alpha=1e4,5-fold,svd,shuffle,per-session -- alpha=10000.0 folds=5 solver=svd
+[PASS] (ridge) scaler fit on train fold only (source) -- StandardScaler().fit(X[tr])  [code/step08_run_ridge_cv.py]
+[PASS] (ridge) ridge fit on train only (source) -- fit on X[tr],Ymat[tr]  [code/step08_run_ridge_cv.py]
+[PASS] (ridge) predict transforms test with train scaler (source) -- predict(scaler.transform(X[te]))  [code/step08_run_ridge_cv.py]
+[PASS] (ridge) alpha=10000 & solver svd (source) -- Ridge svd alpha 1e4  [code/step08_run_ridge_cv.py]
+[PASS] (ridge) one out-of-fold prediction per trial (KFold disjoint) -- KFold splits  [code/step08_run_ridge_cv.py]
+[PASS] (ridge) embedding_fidelity == raw_cosine (combined table) -- allclose True  [outputs/all_sessions_fidelity_results.csv]
+[PASS] (ridge) raw_cosine defined as cos(pred,true) (source) -- cosine to correct candidate  [code/step08_run_ridge_cv.py]
+
+## 7. CORRECTED METRIC SANITY
+[PASS] (corrected) column present: centered_cosine -- present
+[PASS] (corrected) column present: true_word_percentile -- present
+[PASS] (corrected) column present: centered_true_word_percentile -- present
+[PASS] (corrected) true_word_percentile in [0,1] -- [0.000,1.000]
+[PASS] (corrected) centered_true_word_percentile in [0,1] -- [0.000,1.000]
+[PASS] (corrected) true_word_percentile near chance 0.5 -- mean 0.4981
+[PASS] (corrected) centered_true_word_percentile near chance 0.5 -- mean 0.5246
+[PASS] (corrected) raw_cosine high (~0.85, inflated) -- mean 0.8467
+
+## 8. FINAL MODEL NUMBERS (vs source CSV/summary)
+[PASS] (final) main metric is raw_cosine (== embedding_fidelity) -- raw_cosine
+[PASS] (final) coefficient = -0.0291 -- -0.0291
+[PASS] (final) odds ratio = 0.971 -- 0.9714
+[PASS] (final) CI = [0.913, 1.033] -- [0.9134,1.0330]
+[PASS] (final) p ~ 0.354 -- 0.3544
+[PASS] (final) remembered mean fidelity = 0.84627 -- 0.84627
+[PASS] (final) forgotten mean fidelity = 0.84711 -- 0.84711
+[PASS] (final) difference = -0.00084 -- -0.00084
+[PASS] (final) conclusion = no significant effect -- no different
+[PASS] (final) formula recalled ~ embedding_fidelity + session + (1|subject)+(1|word) -- recalled ~ embedding_fidelity + session + (1|subject) + (1|word)
+[PASS] (final) embedding_fidelity metric = raw_cosine -- raw_cosine
+[PASS] (final) predictor z-scored (OR per 1 SD) -- z-scored (OR per 1 SD)
+[PASS] (final) session fixed effect + RE subject & word -- fixed effect, dummy-coded C(session) | 1|subject + 1|word
+[PASS] (final) logistic mixed-effects (BinomialBayesMixedGLM) in source -- GLMM present  [code/step11_run_memory_model.py]
+[PASS] (final) supplementary metrics labeled SUPPLEMENTARY -- supplementary list  [code/step11_run_memory_model.py]
+
+## 11. GITIGNORE
+[PASS] (gitignore) ignores data/ -- ignored  [.gitignore]
+[PASS] (gitignore) ignores data/ds004395/x.edf -- ignored  [.gitignore]
+[PASS] (gitignore) ignores data/ds004395/x.bdf -- ignored  [.gitignore]
+[PASS] (gitignore) ignores outputs/subjects -- ignored  [.gitignore]
+[PASS] (gitignore) ignores outputs/X_eeg.npy -- ignored  [.gitignore]
+[PASS] (gitignore) ignores outputs/Y_t5.npy -- ignored  [.gitignore]
+[PASS] (gitignore) ignores outputs/predicted_embeddings.npy -- ignored  [.gitignore]
+[PASS] (gitignore) ignores venv/ -- ignored  [.gitignore]
+[PASS] (gitignore) ignores code/__pycache__/x.pyc -- ignored  [.gitignore]
+[PASS] (gitignore) ignores .DS_Store -- ignored  [.gitignore]
+[PASS] (gitignore) tracks code/step04_extract_t5_embeddings.py -- tracked  [.gitignore]
+[PASS] (gitignore) tracks results/embeddings/peers_t5large_embeddings.npy -- tracked  [.gitignore]
+[PASS] (gitignore) tracks results/README.md -- tracked  [.gitignore]
+
+================================================================================
+PROGRAMMATIC AUDIT: 136 checks, 0 FAIL
+================================================================================

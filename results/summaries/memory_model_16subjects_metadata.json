@@ -1,0 +1,131 @@
+{
+  "kind": "FINAL outline memory model (multi-subject multi-session)",
+  "formula": "recalled ~ embedding_fidelity + session + (1|subject) + (1|word)",
+  "embedding_fidelity_metric": "raw_cosine",
+  "predictor_scaling": "z-scored (OR per 1 SD)",
+  "session": "fixed effect, dummy-coded C(session)",
+  "random_effects": "1|subject + 1|word",
+  "supplementary_metrics": [
+    "centered_cosine",
+    "true_word_percentile",
+    "centered_true_word_percentile"
+  ],
+  "n_subjects": 16,
+  "n_sessions": 32,
+  "n_trials": 18432,
+  "n_recalled": 9980,
+  "n_forgotten": 8452,
+  "decoding_was_at_chance": true,
+  "final_conclusion": "Remembered and forgotten words showed NO DIFFERENT EEG-to-AI embedding fidelity (no significant effect).",
+  "results": {
+    "raw_cosine": {
+      "role": "MAIN",
+      "remembered_mean": 0.8433661920885649,
+      "forgotten_mean": 0.843665514508436,
+      "glmm": {
+        "model": "logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)",
+        "coef": -0.021054168459010047,
+        "se": 0.017163057807370735,
+        "odds_ratio": 0.9791659232237124,
+        "ci_low": 0.9467750422840996,
+        "ci_high": 1.0126649545910267,
+        "z_approx": -1.2267143008729051,
+        "p_approx": 0.21992999075598707,
+        "interval_kind": "95% credible interval (VB posterior mean +/- 1.96 SD)"
+      },
+      "fallback": {
+        "model": "logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)",
+        "coef": -0.021569265734655813,
+        "se": 0.016465269495867667,
+        "odds_ratio": 0.978661687400653,
+        "ci_low": 0.9475831383236524,
+        "ci_high": 1.010759541458576,
+        "z_approx": -1.3099855875465087,
+        "p_approx": 0.19020071127615445,
+        "interval_kind": "95% CI (cluster-robust; ONLY 4 clusters -> very unreliable)"
+      }
+    },
+    "centered_cosine": {
+      "role": "SUPPLEMENTARY",
+      "remembered_mean": 0.005488264295367624,
+      "forgotten_mean": 0.0050708853731404055,
+      "glmm": {
+        "model": "logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)",
+        "coef": 0.005562173217492436,
+        "se": 0.016855275897985154,
+        "odds_ratio": 1.0055776708230755,
+        "ci_low": 0.9728998146218971,
+        "ci_high": 1.039353114124031,
+        "z_approx": 0.3299959758094097,
+        "p_approx": 0.7414030028045668,
+        "interval_kind": "95% credible interval (VB posterior mean +/- 1.96 SD)"
+      },
+      "fallback": {
+        "model": "logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)",
+        "coef": 0.004580499750916962,
+        "se": 0.016822036694523302,
+        "odds_ratio": 1.004591006275487,
+        "ci_low": 0.9720091253778408,
+        "ci_high": 1.038265036346543,
+        "z_approx": 0.272291627589198,
+        "p_approx": 0.7853977933205173,
+        "interval_kind": "95% CI (cluster-robust; ONLY 4 clusters -> very unreliable)"
+      }
+    },
+    "true_word_percentile": {
+      "role": "SUPPLEMENTARY",
+      "remembered_mean": 0.49647433998431645,
+      "forgotten_mean": 0.4991518343998848,
+      "glmm": {
+        "model": "logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)",
+        "coef": -0.011814440904649365,
+        "se": 0.016849749331686027,
+        "odds_ratio": 0.9882550755668934,
+        "ci_low": 0.9561505018626137,
+        "ci_high": 1.0214376214635486,
+        "z_approx": -0.7011641937267433,
+        "p_approx": 0.48320055263777784,
+        "interval_kind": "95% credible interval (VB posterior mean +/- 1.96 SD)"
+      },
+      "fallback": {
+        "model": "logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)",
+        "coef": -0.012854555134608786,
+        "se": 0.013911430016606113,
+        "odds_ratio": 0.9872277117804336,
+        "ci_low": 0.9606737123661034,
+        "ci_high": 1.0145156907716169,
+        "z_approx": -0.9240283076049168,
+        "p_approx": 0.355471577667515,
+        "interval_kind": "95% CI (cluster-robust; ONLY 4 clusters -> very unreliable)"
+      }
+    },
+    "centered_true_word_percentile": {
+      "role": "SUPPLEMENTARY",
+      "remembered_mean": 0.520014812233162,
+      "forgotten_mean": 0.5168229798967057,
+      "glmm": {
+        "model": "logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)",
+        "coef": 0.01168288388195076,
+        "se": 0.016842359747861767,
+        "odds_ratio": 1.0117513953135953,
+        "ci_low": 0.9788976951737496,
+        "ci_high": 1.045707729179315,
+        "z_approx": 0.6936607492565862,
+        "p_approx": 0.4878949865953146,
+        "interval_kind": "95% credible interval (VB posterior mean +/- 1.96 SD)"
+      },
+      "fallback": {
+        "model": "logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)",
+        "coef": 0.010813556782743563,
+        "se": 0.018642352267068573,
+        "odds_ratio": 1.0108722346024712,
+        "ci_low": 0.9746032808257812,
+        "ci_high": 1.0484909037289198,
+        "z_approx": 0.5800532372647814,
+        "p_approx": 0.5618787172755132,
+        "interval_kind": "95% CI (cluster-robust; ONLY 4 clusters -> very unreliable)"
+      }
+    }
+  },
+  "timestamp_utc": "2026-07-09T14:55:42.193617+00:00"
+}

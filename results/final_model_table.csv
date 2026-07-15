@@ -1,5 +1,0 @@
-metric,coefficient,odds_ratio,ci_lower,ci_upper,p_value,conclusion
-"raw_cosine (embedding_fidelity, MAIN)",-0.0291,0.9714,0.9134,1.033,0.3544,no significant effect
-centered_cosine,-0.0054,0.9946,0.9355,1.0575,0.8631,no significant effect
-true_word_percentile,-0.0245,0.9758,0.9177,1.0376,0.435,no significant effect
-centered_true_word_percentile,0.0103,1.0104,0.9502,1.0743,0.7423,no significant effect

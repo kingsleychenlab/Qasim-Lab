@@ -1,3 +1,0 @@
-group,n,mean_embedding_fidelity,sd_embedding_fidelity,mean_centered_true_word_percentile,sd_centered_true_word_percentile
-remembered,2423,0.84627,0.03109,0.52671,0.27556
-forgotten,2185,0.84711,0.03093,0.52224,0.27642

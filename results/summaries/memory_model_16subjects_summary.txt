@@ -1,0 +1,110 @@
+================================================================================
+FINAL OUTLINE MEMORY MODEL  (multi-subject, multi-session)
+================================================================================
+input             : outputs/all_sessions16_fidelity_results.csv
+1. number of subjects : 16
+2. number of sessions : 32
+3. total trials       : 18432
+4. recalled/forgotten : 9980 / 8452  (recall rate 0.541)
+5. model formula      : recalled ~ embedding_fidelity + session + (1|subject) + (1|word)
+6. embedding_fidelity metric: raw_cosine  (== embedding_fidelity, per outline)
+   predictor z-scored -> odds ratio is PER 1 SD; session = fixed effect C(session).
+
+!!! CAUTION: corrected decoding was at CHANCE (real ~= shuffled word retrieval). Interpret any effect below cautiously. !!!
+
+--------------------------------------------------------------------------------
+METRIC: raw_cosine   [MAIN  == embedding_fidelity == raw_cosine]
+--------------------------------------------------------------------------------
+11. remembered mean fidelity: 0.84337
+    forgotten  mean fidelity: 0.84367   (rem - forg = -0.00030)
+
+[logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)]
+  7. coefficient (per 1 SD): -0.0211
+  8. odds ratio per 1 SD  : 0.9792
+  9. 95% credible interval (VB posterior mean +/- 1.96 SD): [0.9468, 1.0127]
+  10. approx p-value       : 0.2199
+      direction vs forgotten: no different
+
+[logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)]
+  7. coefficient (per 1 SD): -0.0216
+  8. odds ratio per 1 SD  : 0.9787
+  9. 95% CI (cluster-robust; ONLY 4 clusters -> very unreliable): [0.9476, 1.0108]
+  10. approx p-value       : 0.1902
+      direction vs forgotten: no different
+
+--------------------------------------------------------------------------------
+METRIC: centered_cosine   [SUPPLEMENTARY]
+--------------------------------------------------------------------------------
+11. remembered mean fidelity: 0.00549
+    forgotten  mean fidelity: 0.00507   (rem - forg = +0.00042)
+
+[logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)]
+  7. coefficient (per 1 SD): +0.0056
+  8. odds ratio per 1 SD  : 1.0056
+  9. 95% credible interval (VB posterior mean +/- 1.96 SD): [0.9729, 1.0394]
+  10. approx p-value       : 0.7414
+      direction vs forgotten: no different
+
+[logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)]
+  7. coefficient (per 1 SD): +0.0046
+  8. odds ratio per 1 SD  : 1.0046
+  9. 95% CI (cluster-robust; ONLY 4 clusters -> very unreliable): [0.9720, 1.0383]
+  10. approx p-value       : 0.7854
+      direction vs forgotten: no different
+
+--------------------------------------------------------------------------------
+METRIC: true_word_percentile   [SUPPLEMENTARY]
+--------------------------------------------------------------------------------
+11. remembered mean fidelity: 0.49647
+    forgotten  mean fidelity: 0.49915   (rem - forg = -0.00268)
+
+[logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)]
+  7. coefficient (per 1 SD): -0.0118
+  8. odds ratio per 1 SD  : 0.9883
+  9. 95% credible interval (VB posterior mean +/- 1.96 SD): [0.9562, 1.0214]
+  10. approx p-value       : 0.4832
+      direction vs forgotten: no different
+
+[logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)]
+  7. coefficient (per 1 SD): -0.0129
+  8. odds ratio per 1 SD  : 0.9872
+  9. 95% CI (cluster-robust; ONLY 4 clusters -> very unreliable): [0.9607, 1.0145]
+  10. approx p-value       : 0.3555
+      direction vs forgotten: no different
+
+--------------------------------------------------------------------------------
+METRIC: centered_true_word_percentile   [SUPPLEMENTARY]
+--------------------------------------------------------------------------------
+11. remembered mean fidelity: 0.52001
+    forgotten  mean fidelity: 0.51682   (rem - forg = +0.00319)
+
+[logistic GLMM (BinomialBayesMixedGLM VB; +C(session); 1|subject+1|word)]
+  7. coefficient (per 1 SD): +0.0117
+  8. odds ratio per 1 SD  : 1.0118
+  9. 95% credible interval (VB posterior mean +/- 1.96 SD): [0.9789, 1.0457]
+  10. approx p-value       : 0.4879
+      direction vs forgotten: no different
+
+[logistic + C(session)+C(subject) FE + cluster-robust SE (by subject)]
+  7. coefficient (per 1 SD): +0.0108
+  8. odds ratio per 1 SD  : 1.0109
+  9. 95% CI (cluster-robust; ONLY 4 clusters -> very unreliable): [0.9746, 1.0485]
+  10. approx p-value       : 0.5619
+      direction vs forgotten: no different
+
+================================================================================
+FINAL OUTLINE MODEL — CONCLUSION
+================================================================================
+model : recalled ~ embedding_fidelity + session + (1|subject) + (1|word)   (embedding_fidelity = raw_cosine, z-scored)
+embedding_fidelity coefficient (per 1 SD): -0.0211
+odds ratio per 1 SD: 0.9792  95% CrI [0.9468, 1.0127]  approx p=0.2199
+remembered mean = 0.84337   forgotten mean = 0.84367   diff = -0.00030
+
+12. CONCLUSION: Remembered and forgotten words showed NO DIFFERENT EEG-to-AI embedding fidelity (no significant effect).
+
+Interpretation caveat: word-specific decoding was at chance across all sessions (real ~= shuffled), and this dataset has only 4 subjects / 8 sessions. A null here is the expected, honest outcome; any non-null would warrant strong skepticism. This is the outline model, NOT a powered confirmatory test.
+
+wrote outputs/final_memory_model16_summary.txt
+wrote outputs/final_memory_model16_results.csv
+wrote outputs/final_memory_model16_metadata.json
+STATUS: OK (final outline model complete)
