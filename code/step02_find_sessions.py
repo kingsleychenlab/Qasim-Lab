@@ -238,7 +238,7 @@ def main():
     tag = f"{sub}_{ses}"
 
     # ------------------------------------------------------------------
-    # 4. Download ONLY this one session
+    # 4. Download this 1 session
     # ------------------------------------------------------------------
     run([PY, os.path.join(HERE, "code", "step03_download_session.py"),
          "--sub", sub_label, "--ses", ses_label, "--task", args.task])
@@ -249,7 +249,7 @@ def main():
                           f"{sub}_{ses}_task-{args.task}_events.tsv")
 
     # ------------------------------------------------------------------
-    # 5. Inspect this session
+    # 5. Inspect the session
     # ------------------------------------------------------------------
     inspect_out = os.path.join(HERE, "outputs", f"inspection_{tag}.txt")
     run([PY, os.path.join(HERE, "code", "step01_inspect_dataset.py"),
