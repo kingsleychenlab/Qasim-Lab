@@ -10,7 +10,7 @@ input             : outputs/all_sessions32_fidelity_results.csv
 6. embedding_fidelity metric: raw_cosine  (== embedding_fidelity, per outline)
    predictor z-scored -> odds ratio is PER 1 SD; session = fixed effect C(session).
 
-!!! CAUTION: corrected decoding was at CHANCE (real ~= shuffled word retrieval). Interpret any effect below cautiously. !!!
+Caution: corrected decoding came out at chance (real about equal to shuffled word retrieval), so read any effect below with that in mind.
 
 --------------------------------------------------------------------------------
 METRIC: raw_cosine   [MAIN  == embedding_fidelity == raw_cosine]
@@ -100,9 +100,9 @@ embedding_fidelity coefficient (per 1 SD): -0.0145
 odds ratio per 1 SD: 0.9856  95% CrI [0.9630, 1.0086]  approx p=0.2178
 remembered mean = 0.84501   forgotten mean = 0.84553   diff = -0.00052
 
-12. CONCLUSION: Remembered and forgotten words showed NO DIFFERENT EEG-to-AI embedding fidelity (no significant effect).
+12. CONCLUSION: Remembered and forgotten words showed no difference in EEG-to-AI embedding fidelity (no significant effect).
 
-Interpretation caveat: word-specific decoding was at chance across all sessions (real ~= shuffled), and this dataset has only 4 subjects / 8 sessions. A null here is the expected, honest outcome; any non-null would warrant strong skepticism. This is the outline model, NOT a powered confirmatory test.
+One caveat: word-specific decoding sat at chance across all sessions (real about equal to shuffled), and this run covers 32 subjects / 64 sessions. A null is the honest outcome to expect here; a non-null would be worth real skepticism. This is the plan's model, not a powered confirmatory test.
 
 wrote outputs/final_memory_model32_summary.txt
 wrote outputs/final_memory_model32_results.csv

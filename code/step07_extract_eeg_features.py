@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-Stage B — extract raw 300-800 ms EEG windows for each encoding trial.
+Stage B: extract raw 300-800 ms EEG windows for each encoding trial.
 
-For every row of outputs/encoding_trials.csv, extract the raw EEG segment
+For every row of outputs/encoding_trials.csv, pull the raw EEG segment
 [sample + int(win_start*sfreq), sample + int(win_stop*sfreq)) from the EDF and
-flatten it (channels x timepoints) into one feature vector. First pass keeps
-RAW 500 Hz data: NO filtering, baseline correction, or resampling unless the
-corresponding flag is passed.
+flatten it (channels x timepoints) into one feature vector. The first pass keeps
+the raw 500 Hz data, with no filtering, baseline correction, or resampling
+unless the corresponding flag is passed.
 
 Window / indexing (sfreq = 500 Hz, defaults 0.300-0.800 s):
     start_sample = sample + int(0.300 * sfreq)   # = sample + 150
     stop_sample  = sample + int(0.800 * sfreq)   # = sample + 400
-    segment      = data[:, start_sample:stop_sample]   # stop EXCLUSIVE (Python slice)
+    segment      = data[:, start_sample:stop_sample]   # stop exclusive (Python slice)
     -> timepoints = 400 - 150 = 250  (stop is exclusive, so 250 not 251)
 
 Flattening: numpy C-order reshape of a (channels, timepoints) block, i.e.
@@ -43,7 +43,7 @@ def main():
     ap.add_argument("--out-meta-json", default=os.path.join(HERE, "outputs/eeg_feature_metadata.json"))
     ap.add_argument("--win-start", type=float, default=0.300)
     ap.add_argument("--win-stop", type=float, default=0.800)
-    # Preprocessing is OFF by default (first pass keeps raw 500 Hz data).
+    # Preprocessing is off by default (the first pass keeps raw 500 Hz data).
     ap.add_argument("--filter", nargs=2, type=float, metavar=("LFREQ", "HFREQ"),
                     default=None, help="Optional band-pass (l_freq h_freq). Default: none.")
     ap.add_argument("--baseline", nargs=2, type=float, metavar=("BSTART", "BSTOP"),
@@ -74,7 +74,7 @@ def main():
     n_times_total = int(raw.n_times)
     print(f"sfreq={sfreq} n_times={n_times_total} n_ch(all)={len(raw.ch_names)}")
 
-    # Optional preprocessing (all OFF unless flag passed)
+    # Optional preprocessing (all off unless a flag is passed)
     applied = {"filter": None, "baseline": None, "resample": None}
     if args.filter is not None:
         l, h = args.filter
@@ -109,7 +109,7 @@ def main():
     print(f"feature dim = {n_channels} ch x {n_timepoints} tp = {n_features}")
 
     # -----------------------------------------------------------------
-    # Extract per-trial (sample-based, integer indexing — no float onsets)
+    # Extract per-trial (sample-based, integer indexing, no float onsets)
     # -----------------------------------------------------------------
     X = np.zeros((len(trials), n_features), dtype=np.float32)
     meta_rows = []

@@ -2,18 +2,18 @@
 """
 Build the encoding-trials table for one ds004395 (PEERS) session.
 
-One row per WORD-presentation (encoding) event, with a DERIVED free-recall
-label. This stage does NOT extract EEG, does NOT train anything, and does NOT
-use recognition (RECOG_*) events or `recog_resp` as the recall label.
+One row per WORD-presentation (encoding) event, with a derived free-recall
+label. This stage doesn't extract EEG or train anything, and it doesn't use
+recognition (RECOG_*) events or `recog_resp` as the recall label.
 
 Recall derivation (free recall only):
-    recalled = 1  if a REC_WORD event exists in the SAME trial with the SAME
+    recalled = 1  if a REC_WORD event exists in the same trial with the same
                   item_num as the presented WORD (item_name used as a backup
                   validation key).
     recalled = 0  otherwise.
 
-No labels are fabricated: recall is derived purely from the presence/absence of
-matching REC_WORD events within the same trial.
+No labels are fabricated: recall comes purely from whether a matching REC_WORD
+event is present in the same trial.
 
 Output:
     outputs/encoding_trials.csv
@@ -43,9 +43,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     # Canonical session going forward = ltpFR2 sub-LTP269/ses-20:
     # 576 words, 100% peers coverage, 576/576 valid 300-800 ms EEG windows
-    # (full recording, EDF 4741 s). Earlier sessions are archived and must not
+    # (full recording, EDF 4741 s). Earlier sessions are archived and shouldn't
     # be used: sub-LTP063 (ltpFR, low coverage) and sub-LTP293/ses-3 (ltpFR2 but
-    # TRUNCATED EEG, only 449/576 windows fit) under outputs/archive_*/.
+    # truncated EEG, only 449/576 windows fit) under outputs/archive_*/.
     ap.add_argument("--events", default=os.path.join(
         here, "data/ds004395/sub-LTP269/ses-20/eeg/"
         "sub-LTP269_ses-20_task-ltpFR2_events.tsv"))
@@ -93,7 +93,7 @@ def main():
         log(f"REC_WORD events : {len(rec_ev)}")
 
         # -----------------------------------------------------------------
-        # Missing item_num reporting (do NOT silently drop)
+        # Missing item_num reporting (don't silently drop)
         # -----------------------------------------------------------------
         w_missing = word_ev[word_ev.item_num.isna()]
         r_missing = rec_ev[rec_ev.item_num.isna()]
@@ -120,12 +120,12 @@ def main():
         #
         # The key is (trial, item_num), not item_num alone. ltpFR2 reuses the
         # same 576-word pool across trials, so a bare item_num would mark a word
-        # recalled in list 3 as recalled in list 12 as well -- inflating the
-        # recall rate and corrupting the outcome variable.
+        # recalled in list 3 as recalled in list 12 too, inflating the recall
+        # rate and corrupting the outcome variable.
         #
         # item_num == -1 flags an intrusion or vocalization (per events.json):
         # the subject said something that was not a presented word. Dropped
-        # here, since by definition it cannot mark any studied word as recalled.
+        # here, since by definition it can't mark any studied word as recalled.
         # -----------------------------------------------------------------
         rec_valid = rec_ev.dropna(subset=["trial", "item_num"])
         rec_valid = rec_valid[rec_valid.item_num != -1]
@@ -169,7 +169,7 @@ def main():
                 "session": int(w.session) if pd.notna(w.session) else None,
                 "trial": trial,
                 "serialpos": int(w.serialpos),
-                "word": w.item_name,          # preserve UPPERCASE exactly
+                "word": w.item_name,          # keep the uppercase text exactly
                 "item_num": inum,
                 "onset": w.onset,
                 "sample": int(w["sample"]) if pd.notna(w["sample"]) else None,
@@ -219,9 +219,10 @@ def main():
         log.check("no missing sample", df["sample"].notna().all(),
                   f"{int(df['sample'].isna().sum())} missing")
 
-        # EEG-timing validity: onset/sample can be present but INVALID sentinels
-        # (onset<=0, sample<0 == -1) meaning the word was presented but NOT
-        # captured/synced in this EDF. Critical for later EEG window extraction.
+        # EEG-timing validity: onset/sample can be present but still be invalid
+        # sentinels (onset<=0, sample<0 == -1), meaning the word was presented
+        # but not captured/synced in this EDF. Matters for later EEG window
+        # extraction.
         valid_timing = (df.onset > 0) & (df["sample"] >= 0)
         n_valid = int(valid_timing.sum())
         log.check("all WORD events have VALID EEG timing (onset>0 & sample>=0)",
@@ -234,8 +235,8 @@ def main():
                      "(word presented but not captured/synced in this EDF)",
                      f"trials affected: {sorted(bad.trial.unique().tolist())}")
 
-        # EEG WINDOW-FIT check (authoritative, via MNE): the full
-        # [win_start, win_stop] window must fit inside the actual recording.
+        # EEG window-fit check via MNE: the full [win_start, win_stop] window
+        # must fit inside the actual recording.
         # start_sample = sample + int(win_start*sfreq)
         # stop_sample  = sample + int(win_stop*sfreq)
         # valid iff sample>=0 & onset>0 & start_sample>=0 & stop_sample < n_times.

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Fetch ONE subject/session of ds004395 (PEERS) from OpenNeuro's public S3 bucket.
+Fetch one subject/session of ds004395 (PEERS) from OpenNeuro's public S3 bucket.
 
 Anonymous HTTPS, one session at a time (~500 MB EDF plus small sidecars). The
-full dataset is 8.7 TB, so downloading it is not an option -- the pipeline is
+full dataset is 8.7 TB, so downloading it is not an option. The pipeline is
 built around pulling only the sessions that pass step09's validity screen, which
-is also why that screen reads the EDF *header* over the network before
-committing to the body.
+is also why that screen reads the EDF header over the network before committing
+to the body.
 
-Skips files already on disk, so it is safe to re-run and cheap to resume after
+Skips files already on disk, so it's safe to re-run and cheap to resume after
 an interrupted scale-up.
 
 Public mirror:

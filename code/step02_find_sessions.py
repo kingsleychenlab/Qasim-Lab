@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 """
 Find a task-ltpFR2 session in ds004395 that matches the 576-word PEERS T5
-embedding list, download ONLY ONE such session, and run the inspection +
+embedding list, download just one such session, and run the inspection and
 encoding-trials stages on it.
 
-Why: task-ltpFR uses the ~1638-word wasnorm_wordpool (only ~35% of a session's
-words are in peers_word_order.csv), whereas task-ltpFR2 (PEERS4) uses the
-576-word pool that the T5 embeddings were built from (expected ~100% coverage).
+The reason: task-ltpFR uses the ~1638-word wasnorm_wordpool (only ~35% of a
+session's words are in peers_word_order.csv), whereas task-ltpFR2 (PEERS4) uses
+the 576-word pool that the T5 embeddings were built from (expected ~100%
+coverage).
 
 This script:
   1. Lists ltpFR2 subject/session paths from OpenNeuro's public S3 listing
-     (metadata only — does NOT download the full dataset).
+     (metadata only, no download of the full dataset).
   2. Prints candidate sessions with EEG/events sizes (smallest first).
-  3. Downloads ONE ltpFR2 session (default: smallest EDF; override with --sub/--ses).
+  3. Downloads one ltpFR2 session (default: smallest EDF; override with --sub/--ses).
   4. Runs code/step01_inspect_dataset.py on that session.
   5. Runs code/step05_create_encoding_trials.py on that session.
   6. Checks word coverage against peers_word_order.csv and reports.
 
-It does NOT create X_eeg.npy / Y_t5.npy and does NOT train anything.
+It doesn't create X_eeg.npy / Y_t5.npy and doesn't train anything.
 """
 
 import argparse
@@ -84,8 +85,8 @@ def edf_url(sub, ses, task):
 
 
 def edf_header_ntimes(url, edf_size):
-    """Parse n_times & sfreq from just the EDF header via a small Range request.
-    Verified to match mne.io.read_raw_edf(...).n_times exactly. Avoids
+    """Parse n_times and sfreq from just the EDF header via a small Range request.
+    I checked that this matches mne.io.read_raw_edf(...).n_times exactly. Saves
     downloading the full (100s of MB) EDF just to learn its length."""
     r = requests.get(url, headers={"Range": "bytes=0-49999"}, timeout=60)
     r.raise_for_status()
@@ -200,11 +201,11 @@ def main():
         if target not in sess:
             sys.exit(f"Requested {target[0]}/{target[1]} is not a task-{args.task} session.")
     else:
-        # A session is acceptable ONLY if all 576 WORD events yield a full
+        # A session is only acceptable if all 576 WORD events yield a full
         # [win_start, win_stop] EEG window that fits inside the EDF:
-        #   n_word == 576, coverage == 576/576, AND every window's stop_sample
-        #   < raw.n_times (parsed cheaply from the EDF header). Small/truncated
-        #   EDFs fail because their later word windows fall off the end.
+        #   n_word == 576, coverage == 576/576, and every window's stop_sample
+        #   < raw.n_times (parsed cheaply from the EDF header). Small or
+        #   truncated EDFs fail because their later word windows fall off the end.
         NEED = 576
         target = None
         print(f"\nEvaluating candidates (need WORD=576, cov=576/576, "

@@ -4,14 +4,13 @@ Extract T5-large encoder embeddings for a PEERS word list.
 
 For each word:
   1. Tokenize with the T5 SentencePiece tokenizer.
-  2. Run the T5 *encoder* (T5EncoderModel, NOT the decoder,
-     NOT T5ForConditionalGeneration) with output_hidden_states=True.
+  2. Run the T5 encoder (T5EncoderModel, not the decoder, not
+     T5ForConditionalGeneration) with output_hidden_states=True.
   3. Take the middle encoder hidden state (default: hidden_states[12],
      the 12th of 24 encoder layers for t5-large; layer 0 is the
      embedding output).
-  4. Average the subword-token embeddings for the word, EXCLUDING:
-        - padding tokens
-        - the T5 end-of-sequence token </s> (eos_token_id)
+  4. Average the subword-token embeddings for the word, but leave out
+     padding tokens and the T5 end-of-sequence token </s> (eos_token_id).
   5. Save one 1024-dim vector per word.
 
 Reference:
@@ -67,14 +66,14 @@ def select_device():
 
 
 def load_words(input_path):
-    """Load the PEERS word list, strip whitespace, preserve order, enforce count."""
+    """Load the PEERS word list, strip whitespace, keep the order, and check the count."""
     df = pd.read_csv(input_path)
     if "word" not in df.columns:
         raise ValueError(
             f"Input CSV '{input_path}' must have a 'word' column. "
             f"Found columns: {list(df.columns)}"
         )
-    # Strip whitespace but PRESERVE the original order exactly.
+    # Strip whitespace but keep the original order exactly.
     words = [str(w).strip() for w in df["word"].tolist()]
 
     # Do not silently continue if the word count is not 576.
@@ -197,8 +196,7 @@ def main():
             for i in range(len(batch_words)):
                 global_idx = start + i
 
-                # Clear, explicit mask:
-                #   keep real tokens, drop EOS, drop padding.
+                # Mask: keep the real tokens, drop EOS, drop padding.
                 valid_mask = (
                     attention_mask[i].bool()
                     & (input_ids[i] != eos_id)

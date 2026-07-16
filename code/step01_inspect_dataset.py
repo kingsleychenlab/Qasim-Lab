@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """
-Inspect the schema of a locally-downloaded slice of ds004395 (PEERS).
+Look at the schema of a locally-downloaded slice of ds004395 (PEERS).
 
-This is a READ-ONLY inspection stage. It does NOT:
-  - train any model / ridge regression
-  - extract EEG windows
-  - fabricate recall / recalled labels
-  - assume column names (all columns are discovered from the files themselves)
+This stage only reads. It doesn't train a model or ridge regression, extract
+EEG windows, or make up recall/recalled labels, and it doesn't assume any
+column names (every column is discovered from the files themselves).
 
-It looks inside data/ds004395, finds subjects / sessions / EEG files /
+It looks inside data/ds004395, finds subjects, sessions, EEG files, and
 *_events.tsv files, reports the events schema, tries to read one EEG file
-with MNE (sampling rate + channel count), and writes everything to
+with MNE (sampling rate and channel count), and writes everything to
 outputs/ds004395_inspection_report.txt.
 
 Usage:
@@ -28,8 +26,9 @@ import pandas as pd
 from common import Tee
 
 # ---------------------------------------------------------------------------
-# Column-name heuristics. We do NOT assume a fixed schema; we look for columns
-# whose names *contain* these hints (case-insensitive) and report candidates.
+# Column-name heuristics. We don't assume a fixed schema; instead we look for
+# columns whose names contain these hints (case-insensitive) and report the
+# candidates.
 # ---------------------------------------------------------------------------
 WORD_HINTS = ["item_name", "item", "word", "stimulus", "stim_file", "stim", "probe"]
 ONSET_HINTS = ["onset", "time", "sample", "latency"]
@@ -108,7 +107,7 @@ def inspect_events_file(log, path):
     log(f"  possible ONSET / TIME columns    : {onset_cands}")
     log(f"  possible RECALL / MEMORY columns : {recall_cands}")
 
-    # Recall signal can live in trial_type VALUES (e.g. REC_WORD), not just columns.
+    # Recall signal can live in trial_type values (e.g. REC_WORD), not just columns.
     for tt_col in ("trial_type", "type", "event"):
         if tt_col in df_typed.columns:
             vals = [str(v) for v in df_typed[tt_col].dropna().unique()]

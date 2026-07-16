@@ -2,12 +2,12 @@
 """
 Run the whole single-session pipeline across many subjects, one session each.
 
-The bridge between "it works on one session" and a result worth reporting. It
-picks subjects, drives the same five stages per session, and concatenates the
-per-trial fidelity tables into one table for the model.
+This is what gets from "it works on one session" to a result worth reporting.
+It picks subjects, runs the same five stages on each session, and concatenates
+the per-trial fidelity tables into one table for the model.
 
-Session selection is the part worth understanding. A session is used only if it
-is complete on every axis the pipeline needs:
+The session selection matters. A session is used only if it is complete on every
+axis the pipeline needs:
 
     task == ltpFR2       the 576-word pool the T5 embeddings were built from;
                          plain ltpFR uses a different, larger pool
@@ -16,10 +16,10 @@ is complete on every axis the pipeline needs:
     576 valid windows    the full 300-800 ms window fits inside the recording
                          for every trial (truncated EDFs fail here)
 
-All four are screened from the EDF header *before* downloading, since the EDFs
-are large and most candidate sessions fail. Sessions are not dropped for any
-reason related to the outcome -- only for being incomplete -- so this selection
-cannot bias the memory result.
+All four are screened from the EDF header before downloading, since the EDFs are
+large and most candidate sessions fail. Sessions are dropped only for being
+incomplete, never for any reason tied to the outcome, so this selection cannot
+bias the memory result.
 
 Per session it runs the exact validated chain:
 
@@ -32,7 +32,7 @@ Per session it runs the exact validated chain:
 Per-session outputs go under outputs/subjects/<subject>_ses-<session>/.
 A combined table is written to outputs/all_subjects_fidelity_results.csv.
 
-This does NOT run the mixed-effects memory model.
+This does not run the mixed-effects memory model.
 """
 
 import argparse

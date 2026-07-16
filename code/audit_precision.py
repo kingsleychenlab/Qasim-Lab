@@ -2,15 +2,16 @@
 """
 The end-to-end audit: re-derive the project's claims from source and check them.
 
-Trusts nothing the pipeline wrote. Where a stage produced a number, this
-recomputes it from the raw inputs and compares -- recall labels are re-derived
-from the events files, EEG windows are re-extracted from the EDFs, and the T5
-matrix is re-checked against its own metadata. Where a claim is about *how* a
-stage works, it reads that stage's source and asserts the mechanism is present
-(for example, that step08 really does fit its scaler on training folds only).
+This trusts nothing the pipeline wrote. Where a stage produced a number, it
+recomputes that number from the raw inputs and compares. Recall labels get
+re-derived from the events files, EEG windows get re-extracted from the EDFs,
+and the T5 matrix is re-checked against its own metadata. Where a claim is about
+*how* a stage works, it reads that stage's source and asserts the mechanism is
+present (for example, that step08 really does fit its scaler on training folds
+only).
 
-That source-reading is why this file names other scripts as strings: renaming a
-step without updating the paths here turns the audit into a silent no-op.
+That source-reading is why this file names other scripts as strings: rename a
+step without updating the paths here and the audit turns into a silent no-op.
 
 Read-only. Writes only its own report to outputs/final_precision_audit.txt.
 
@@ -74,11 +75,8 @@ req = ["results/embeddings/peers_words.csv", "results/embeddings/peers_word_orde
        "outputs/final_memory_model_metadata.json",
        "outputs/recall_label_audit.txt", "outputs/eeg_extraction_audit.txt",
        "results/README.md", "results/methods_and_math.md",
-       "results/final_results_4subjects.md",
        "results/summary_4_vs_16_vs_32_subjects.txt",
-       "results/validation/audit_report.md",
-       "results/validation/precision_audit.md",
-       "results/validation/reproducibility_checklist.md"]
+       "results/validation/validation.md"]
 for f in req:
     ck("structure", f"exists {f}", os.path.isfile(os.path.join(HERE, f)), "present", f)
 opt = ["outputs/all_sessions_summary.txt", "outputs/model_input_validation.txt",
@@ -339,7 +337,7 @@ for pat in needed:
     ck("gitignore", f"ignores {pat}", is_ignored(pat),
        "ignored" if is_ignored(pat) else "NOT IGNORED", ".gitignore")
 
-# the deliverable itself must NOT be ignored
+# the deliverable itself must not be ignored
 for pat in ["code/step04_extract_t5_embeddings.py",
             "results/embeddings/peers_t5large_embeddings.npy",
             "results/README.md"]:

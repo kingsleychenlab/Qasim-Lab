@@ -3,22 +3,22 @@
 Spot-check the saved T5 embeddings by rebuilding a few from scratch.
 
 Loads t5-large afresh, recomputes a handful of words, and compares against the
-stored rows of peers_t5large_embeddings.npy. Catches the failure step04's own
-validation cannot: a matrix that is internally consistent (right shape, no NaNs,
-plausible norms) but was built with the wrong layer, the wrong pooling, or the
-EOS token left in. Any of those would still produce a perfectly well-formed
-576 x 1024 file, and every downstream number would be quietly wrong.
+stored rows of peers_t5large_embeddings.npy. This catches the failure step04's
+own validation can't: a matrix that is internally consistent (right shape, no
+NaNs, plausible norms) but was built with the wrong layer, the wrong pooling, or
+the EOS token left in. Any of those still produces a well-formed 576 x 1024
+file, and every downstream number would be wrong.
 
-Recompute path deliberately mirrors the extractor exactly:
+The recompute path mirrors the extractor exactly:
   - google-t5/t5-large via T5EncoderModel (encoder only, never the decoder)
   - output_hidden_states=True, take hidden_states[12] (middle of 24 layers)
   - drop EOS (</s>) and pad, average the remaining subword tokens
 
-Reads the words back through peers_word_order.csv, so it also checks the
+It reads the words back through peers_word_order.csv, so it also checks the
 word -> row mapping the rest of the pipeline depends on.
 
 Interpreting the output: max abs diff should be ~1e-6 or below. Small nonzero
-values are expected -- float32 storage and nondeterministic GPU kernels -- so
+values are expected, from float32 storage and nondeterministic GPU kernels, so
 the thresholds are <1e-5 OK, <1e-3 close, anything larger means the saved matrix
 was not produced by this recipe.
 
@@ -96,7 +96,7 @@ def main():
 
             # The word's own subword tokens only. T5 appends </s> to every
             # sequence, and averaging it in would drag all 576 vectors toward a
-            # shared constant -- inflating every cosine downstream.
+            # shared constant, inflating every cosine downstream.
             valid = attn[0].bool() & (input_ids[0] != eos_id) & (input_ids[0] != pad_id)
             vec = layer_hidden[valid].mean(dim=0).float().cpu().numpy().astype(np.float32)
 

@@ -3,9 +3,8 @@
 Shared helpers.
 
 Every stage in this pipeline writes a human-readable report while it runs and
-counts its own PASS/FAIL checks, and several need the PEERS word pool. Those
-three things were each reimplemented in most scripts; they live here now so
-there is one definition to read and one to trust.
+counts its own PASS/FAIL checks, and several need the PEERS word pool. Most
+scripts had reimplemented each of those, so they live here now as one copy.
 
 Imported as a plain sibling module (`from common import Tee`). That works
 because a script's own directory is on sys.path when it is run directly, and

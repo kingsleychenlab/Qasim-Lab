@@ -2,16 +2,15 @@
 """
 The gate before ridge: check X_eeg, Y_t5 and trial_metadata line up.
 
-Read-only. No regression, no analysis -- this exists purely so that a
-misalignment is caught here, loudly, rather than downstream where it would not
-be caught at all.
+Read-only, no regression or analysis. It exists so that a misalignment gets
+caught here rather than downstream, where nothing would catch it.
 
 The failure it guards against: row i of X must be the EEG for the same trial
-whose word's embedding is row i of Y. If those ever slip out of step, ridge is
-trained to predict the wrong word's vector from each trial's brain response. It
-would not crash. It would not warn. It would produce fidelity values that look
-entirely reasonable and mean nothing. Shapes, row counts and per-row word
-agreement are all checked here for that one reason.
+whose word's embedding is row i of Y. If those slip out of step, ridge gets
+trained to predict the wrong word's vector from each trial's brain response.
+That would not crash or warn; it would just produce fidelity values that look
+reasonable and mean nothing. Shapes, row counts and per-row word agreement are
+all checked here to rule that out.
 
 Writes a full report to outputs/model_input_validation.txt and exits non-zero
 on any failure, so it can gate the pipeline.

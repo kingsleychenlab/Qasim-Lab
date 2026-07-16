@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-The decoding stage: EEG -> predicted T5 embedding -> fidelity, for ONE session.
+The decoding stage: EEG -> predicted T5 embedding -> fidelity, for one session.
 
-This is the engine of the project. step09/step10 invoke it once per
-subject/session, and the fidelity column every downstream result rests on is
-produced here. It runs one session at a time by design -- ridge is fit *within*
-a session, so a model never sees another session's trials.
+This is the core of the project. step09/step10 call it once per subject/session,
+and the fidelity column that every downstream result rests on comes out of here.
+It runs one session at a time on purpose. Ridge is fit within a session, so a
+model never sees another session's trials.
 
     X (576 x 32250 EEG features) --ridge--> Y_hat (576 x 1024)
     fidelity = cosine(Y_hat, true embedding)
 
-Why the extra metrics. Raw cosine alone is misleading: every T5 vector shares a
-large common direction, so predicting roughly "the average word" already scores
-~0.85. The word-specific metrics below ask the question that actually matters --
-is the *correct* word ranked above the other 575? -- and the shuffled-label
-control establishes what that number looks like when no signal exists at all.
+The extra metrics are there because raw cosine on its own is misleading. Every
+T5 vector shares a large common direction, so predicting roughly "the average
+word" already scores ~0.85. The word-specific metrics below ask the question
+that actually matters, whether the correct word is ranked above the other 575,
+and the shuffled-label control shows what that number looks like when no signal
+exists at all.
 
   raw_cosine            cosine(pred, true)
   centered_cosine       cosine after subtracting the fold's Y_train mean, which
@@ -29,8 +30,8 @@ control establishes what that number looks like when no signal exists at all.
                         Real must beat shuffled or there is no word-specific
                         decoding, whatever the raw cosine says.
 
-Centering uses the *training* fold's mean, never the test trials' -- computing
-it over all 576 would leak test information into the metric.
+Centering uses the training fold's mean, not the test trials'. Computing it over
+all 576 would leak test information into the metric.
 
 CV: 5-fold KFold(shuffle=True, random_state=42), StandardScaler fit on X_train
 only, Ridge(alpha=10000, solver="svd"), exactly one out-of-fold prediction per
@@ -86,8 +87,8 @@ def cv_predict(X, Ymat, splits):
     """Out-of-fold Ridge predictions + per-fold train means + fold assignment.
 
     Each trial is predicted exactly once, by a model that never saw it. The
-    scaler is fit on the training rows alone -- fitting it on all of X first
-    would leak the test trials' means and variances into the model.
+    scaler is fit on the training rows alone. Fitting it on all of X first would
+    leak the test trials' means and variances into the model.
     """
     pred = np.full((X.shape[0], Ymat.shape[1]), np.nan)
     fold_mean = {}
@@ -109,13 +110,13 @@ def cv_predict(X, Ymat, splits):
 def retrieval_metrics(pred, emb, correct_idx, fold_mean, fold_assign, emb_unit=None):
     """Per-trial raw + centered cosine-to-correct, rank, percentile, top-k.
 
-    Worked fold by fold because the centering mean is fold-specific: each test
-    trial must be scored against its own training fold's Y mean, not a global one.
+    Done fold by fold because the centering mean is fold-specific: each test
+    trial is scored against its own training fold's Y mean, not a global one.
 
     Rank is the count of candidates scoring strictly above the correct word,
-    plus one. Ties therefore favour the correct word (it keeps the better rank),
-    which is the conservative direction for a null result -- it can only flatter
-    the decoder, and the decoder still came out at chance.
+    plus one. Ties therefore favour the correct word, which keeps the better
+    rank. That is the conservative direction for a null result: it can only
+    flatter the decoder, and the decoder still came out at chance.
     """
     n = pred.shape[0]
     out = {k: np.zeros(n) for k in (
@@ -216,18 +217,18 @@ def main():
                              emb_unit=emb_unit)
 
     # ---------------- SHUFFLED-label control ----------------
-    # The decisive check. Permuting Y across trials destroys the EEG-to-word
-    # correspondence while leaving X, the folds, the alpha and the metric
-    # untouched, so whatever this scores is what "no signal" looks like for this
-    # session. Real must clear it; on this dataset it does not.
+    # This is the check that decides it. Permuting Y across trials destroys the
+    # EEG-to-word correspondence while leaving X, the folds, the alpha and the
+    # metric untouched, so whatever this scores is what "no signal" looks like
+    # for this session. Real must clear it; on this dataset it does not.
     log("[shuffled] running negative control (Y permuted across trials, same folds) ...")
     rng = np.random.RandomState(SHUFFLE_SEED)
     perm = rng.permutation(N_TRIALS)
     Y_shuf = Y[perm]
     pred_s, fold_mean_s, fold_assign_s = cv_predict(X, Y_shuf, splits)
-    # Scored against the TRUE correct word: candidates and correct_idx are
-    # deliberately left unpermuted, so this asks "can a model trained on
-    # scrambled labels still find the right word?" -- the answer must be no.
+    # Scored against the true correct word: candidates and correct_idx are
+    # deliberately left unpermuted, so this asks whether a model trained on
+    # scrambled labels can still find the right word. The answer has to be no.
     shuf = retrieval_metrics(pred_s, emb, correct_idx, fold_mean_s, fold_assign_s,
                              emb_unit=emb_unit)
 

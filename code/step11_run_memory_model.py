@@ -1,32 +1,29 @@
 #!/usr/bin/env python3
 """
-The memory model -- the final stage of the project outline.
+The memory model, the last stage of the project.
 
     recalled ~ embedding_fidelity + session + (1|subject) + (1|word)
 
-Answers the project's actual question: given that ridge already turned each
-trial's EEG into a predicted T5 embedding, and fidelity is how close that
-prediction landed to the true one, does higher fidelity make a word more likely
-to be recalled later?
+This is the question the whole project is built around. Ridge already turned
+each trial's EEG into a predicted T5 embedding, and fidelity measures how close
+that prediction landed to the real one. Here I ask whether higher fidelity makes
+a word more likely to be recalled later.
 
-Design choices, all forced by the outline:
-  - recalled is binary               -> logistic, not linear.
-  - embedding_fidelity == raw_cosine -> the metric the outline names.
-  - the predictor is z-scored        -> the odds ratio reads "per 1 SD of
-                                        fidelity", comparable across metrics.
-  - session is a fixed effect        -> only 2 sessions per subject, too few
-                                        levels to estimate a variance from.
-  - subject and word are random      -> crossed intercepts; see fit_glmm.
+A few modeling choices, most of them fixed by the plan. recalled is yes/no, so
+the model is logistic rather than linear. embedding_fidelity is raw_cosine, the
+metric the plan names. The predictor is z-scored, so the odds ratio reads as
+"per 1 SD of fidelity" and stays comparable across metrics. session is a fixed
+effect because there are only two sessions per subject, too few to estimate a
+variance from. subject and word are crossed random intercepts (see fit_glmm).
 
-Two fits are reported per metric. fit_glmm is the result; fit_fallback is an
-assumption-check that should agree with it. Three supplementary metrics rerun
-the same model to show the conclusion does not depend on the outline's choice
-of raw cosine.
+Each metric gets two fits. fit_glmm is the one I report; fit_fallback makes
+different assumptions and should agree with it. Three supplementary metrics run
+the same model to check the conclusion doesn't hinge on using raw cosine.
 
-Read the caveat this prints: word-specific decoding came out at chance (real
-~= shuffled-label control), so there is no established fidelity signal for a
-memory effect to sit on top of. A null here is the expected outcome, and a
-non-null would be more suspicious than exciting.
+One caveat that the script prints: word-specific decoding came out at chance
+(real about equal to the shuffled-label control), so there's no fidelity signal
+for a memory effect to sit on top of. A null is what you'd expect here, and a
+non-null would be more reason for suspicion than excitement.
 
 Usage:
     python code/step11_run_memory_model.py \
@@ -51,46 +48,45 @@ import pandas as pd
 
 from common import Tee
 
-# Silence library deprecation chatter only. Convergence warnings are left ON
-# deliberately: a VB fit that did not converge would otherwise produce a
-# confident-looking odds ratio with nothing behind it, and the whole result
-# rests on these fits converging.
+# Silence only the library deprecation chatter. Convergence warnings stay on: a
+# VB fit that didn't converge would hand back a confident-looking odds ratio with
+# nothing behind it, and the whole result depends on these fits converging.
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# raw_cosine is the outline's embedding_fidelity, so it stays the MAIN metric even
-# though it is known to be inflated by the common embedding direction (see the
-# centered_* supplementaries, which strip that direction out). Reporting the
-# outline metric as primary keeps the preregistered analysis honest; the
-# supplementaries show the conclusion does not hinge on that choice.
+# raw_cosine is the plan's embedding_fidelity, so it stays the main metric even
+# though we know it's inflated by the common embedding direction (the centered_*
+# supplementaries strip that direction out). Keeping the preregistered metric as
+# primary keeps the analysis honest, and the supplementaries show the conclusion
+# doesn't depend on that choice.
 MAIN_METRIC = "raw_cosine"
 SUPP_METRICS = ["centered_cosine", "true_word_percentile", "centered_true_word_percentile"]
 FORMULA = "recalled ~ embedding_fidelity + session + (1|subject) + (1|word)"
 
 
 def zscore(s):
-    # ddof=0: this is a rescaling of the observed sample, not an estimate of a
+    # ddof=0: this rescales the observed sample, it isn't an estimate of a
     # population SD, so the coefficient means "per 1 SD of the fidelity we saw".
     return (s - s.mean()) / s.std(ddof=0)
 
 
 def fit_glmm(df, metric):
-    """The outline model. Logistic GLMM, crossed random intercepts.
+    """The main model. Logistic GLMM with crossed random intercepts.
 
     recalled ~ zfid + C(session), with (1|subject) + (1|word).
 
-    Crossed (not nested) random effects: every subject sees essentially every
-    word, so subject and word are two independent grouping factors. The word
-    intercept is what stops a handful of intrinsically memorable words from
-    masquerading as a fidelity effect.
+    The random effects are crossed, not nested: every subject sees essentially
+    every word, so subject and word are two independent grouping factors. The
+    word intercept is what keeps a handful of intrinsically memorable words from
+    passing themselves off as a fidelity effect.
 
-    Fit by variational Bayes. statsmodels has no Laplace/MCMC path for crossed
-    binomial GLMMs at this scale (36k trials x ~600 word levels), and VB is the
-    only estimator here that converges in reasonable time. The cost is that VB
-    is known to *understate* posterior variance, so the interval below is, if
-    anything, too narrow -- which makes a null conclusion conservative.
+    Fit by variational Bayes. statsmodels has no Laplace or MCMC path for crossed
+    binomial GLMMs at this scale (36k trials by ~600 word levels), and VB is the
+    only estimator here that converges in a reasonable time. The catch is that VB
+    tends to understate posterior variance, so if anything the interval below is
+    too narrow, which only makes a null conclusion more conservative.
     """
     from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
     from scipy.stats import norm
@@ -101,7 +97,7 @@ def fit_glmm(df, metric):
     d["word"] = d["word"].astype("category")
     try:
         # "0 + C(...)" gives one variance component per level with no extra
-        # intercept, i.e. a plain random intercept for each grouping factor.
+        # intercept, which is just a plain random intercept per grouping factor.
         vc = {"subject": "0 + C(subject)", "word": "0 + C(word)"}
         res = BinomialBayesMixedGLM.from_formula(
             "recalled ~ zfid + C(session)", vc, d).fit_vb(verbose=False)
@@ -125,16 +121,16 @@ def fit_glmm(df, metric):
 
 
 def fit_fallback(df, metric):
-    """Cross-check on the GLMM, not an independent result.
+    """A cross-check on the GLMM, not a result in its own right.
 
-    Swaps the random intercepts for subject/session fixed effects and leans on
-    cluster-robust SEs to absorb within-subject correlation. Worth running
-    because it makes completely different assumptions from VB -- if the two
-    disagree wildly, the GLMM is suspect.
+    This swaps the random intercepts for subject/session fixed effects and uses
+    cluster-robust SEs to soak up within-subject correlation. It's worth running
+    because it assumes something completely different from VB, so if the two
+    disagree badly the GLMM is suspect.
 
-    Its SEs are only trustworthy when the cluster count is large; the caller
-    reports the actual count so the reader can judge. Note this model cannot
-    absorb word-level variance at all, which is the main reason it is secondary.
+    The SEs are only trustworthy when there are a lot of clusters, so the caller
+    reports the actual count and lets the reader judge. This model can't absorb
+    word-level variance at all, which is the main reason it's the secondary one.
     """
     import statsmodels.formula.api as smf
     d = df.copy()
@@ -162,11 +158,11 @@ def fit_fallback(df, metric):
 
 
 def verdict(res):
-    """Call an effect only when the p-value and the interval agree.
+    """Only call an effect when the p-value and the interval agree.
 
-    Deliberately stricter than p < 0.05 alone: the interval must also exclude an
-    odds ratio of 1.0. With a VB posterior the two can disagree at the margin,
-    and on a preregistered null a borderline p alone is not worth claiming.
+    This is stricter than p < 0.05 on its own, since the interval also has to
+    exclude an odds ratio of 1.0. With a VB posterior the two can disagree near
+    the margin, and on a preregistered null a borderline p isn't worth claiming.
     """
     if "error" in res:
         return "inconclusive (fit failed)"
@@ -187,10 +183,10 @@ def main():
     if not os.path.isfile(args.input):
         sys.exit(f"ERROR: input not found: {args.input}")
     df = pd.read_csv(args.input)
-    # The upstream table carries fidelity twice: once under the outline's name
-    # and once under the metric it actually is. If those ever diverge, the
-    # column names no longer mean what the summary claims they mean, so refuse
-    # to report rather than silently model the wrong column.
+    # The upstream table stores fidelity twice, once under the plan's name and
+    # once under the metric it actually is. If those two ever diverge, the column
+    # names stop meaning what the summary says they mean, so bail out instead of
+    # quietly modeling the wrong column.
     if "embedding_fidelity" in df.columns and not np.allclose(
             df["embedding_fidelity"], df["raw_cosine"]):
         sys.exit("ERROR: embedding_fidelity != raw_cosine in input.")
@@ -215,8 +211,8 @@ def main():
     log(f"5. model formula      : {FORMULA}")
     log(f"6. embedding_fidelity metric: {MAIN_METRIC}  (== embedding_fidelity, per outline)")
     log("   predictor z-scored -> odds ratio is PER 1 SD; session = fixed effect C(session).")
-    log("\n!!! CAUTION: corrected decoding was at CHANCE (real ~= shuffled word "
-        "retrieval). Interpret any effect below cautiously. !!!")
+    log("\nCaution: corrected decoding came out at chance (real about equal to "
+        "shuffled word retrieval), so read any effect below with that in mind.")
 
     rows = []
     meta_out = {}
@@ -260,10 +256,10 @@ def main():
     forg = meta_out[MAIN_METRIC]["forgotten_mean"]
     direction = verdict(main) if "error" not in main else verdict(meta_out[MAIN_METRIC]["fallback"])
     concl_map = {
-        "higher": "Remembered words had HIGHER EEG-to-AI embedding fidelity than forgotten words.",
-        "lower": "Remembered words had LOWER EEG-to-AI embedding fidelity than forgotten words.",
-        "no different": "Remembered and forgotten words showed NO DIFFERENT EEG-to-AI embedding "
-                        "fidelity (no significant effect).",
+        "higher": "Remembered words had higher EEG-to-AI embedding fidelity than forgotten words.",
+        "lower": "Remembered words had lower EEG-to-AI embedding fidelity than forgotten words.",
+        "no different": "Remembered and forgotten words showed no difference in EEG-to-AI "
+                        "embedding fidelity (no significant effect).",
     }
     log("\n" + "=" * 80)
     log("FINAL OUTLINE MODEL — CONCLUSION")
@@ -277,14 +273,14 @@ def main():
     log(f"remembered mean = {rem:.5f}   forgotten mean = {forg:.5f}   "
         f"diff = {rem-forg:+.5f}")
     log(f"\n12. CONCLUSION: {concl_map[direction]}")
-    # Scale the caveat to the run actually being analysed. This text is read
-    # straight out of the summary file, so a hardcoded sample size here would
-    # contradict the header above it.
-    log(f"\nInterpretation caveat: word-specific decoding was at chance across all "
-        f"sessions (real ~= shuffled), and this run covers {n_sub} subjects / "
-        f"{n_ses} sessions. A null here is the expected, honest outcome; any "
-        f"non-null would warrant strong skepticism. This is the outline model, "
-        f"NOT a powered confirmatory test.")
+    # Match the caveat to the run being analyzed. People read this straight out of
+    # the summary file, so a hardcoded sample size here would contradict the header
+    # above it.
+    log(f"\nOne caveat: word-specific decoding sat at chance across all sessions "
+        f"(real about equal to shuffled), and this run covers {n_sub} subjects / "
+        f"{n_ses} sessions. A null is the honest outcome to expect here; a non-null "
+        f"would be worth real skepticism. This is the plan's model, not a powered "
+        f"confirmatory test.")
 
     pd.DataFrame(rows).to_csv(args.out_csv, index=False)
     json.dump({

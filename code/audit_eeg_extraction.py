@@ -2,24 +2,23 @@
 """
 Re-cut EEG windows straight from the EDF and check X_eeg matches.
 
-Guards the one thing nothing else can catch: an X_eeg that is the right shape,
-free of NaNs, and cut from the wrong samples. A window offset by even a few
-samples still produces a perfectly valid 576 x 32250 matrix, and ridge would
-happily fit it -- the fidelity numbers would just quietly describe the wrong
-slice of brain activity.
+This catches something nothing else can: an X_eeg that has the right shape, no
+NaNs, but was cut from the wrong samples. A window off by even a few samples
+still gives a valid 576 x 32250 matrix, and ridge would fit it fine. The
+fidelity numbers would just describe the wrong slice of brain activity.
 
-So this trusts none of step07's own bookkeeping. It re-reads the EDF with MNE,
-re-picks the same 129 channels, recomputes the window from the event sample, and
-compares the resulting bytes to the stored row. Only a handful of rows (0, 100,
-300, 575) are checked: an indexing or flattening error is systematic and would
-show up on any of them, and re-reading a ~500 MB EDF is the slow part.
+So I don't trust any of step07's own bookkeeping here. This re-reads the EDF
+with MNE, re-picks the same 129 channels, recomputes the window from the event
+sample, and compares the resulting bytes to the stored row. Only a few rows (0,
+100, 300, 575) get checked. An indexing or flattening error is systematic and
+would show up on any of them, and re-reading a ~500 MB EDF is the slow part.
 
 Window arithmetic being verified (sfreq=500, 0.300-0.800 s):
     start_sample = sample + int(0.300*sfreq)   # +150
     stop_sample  = sample + int(0.800*sfreq)   # +400, exclusive -> 250 timepoints
 
-Also re-checks the flattening order. step08 sees only a flat 32250-vector, so
-channel-major (C-order) vs time-major is invisible downstream -- but it silently
+It also re-checks the flattening order. step08 only sees a flat 32250-vector, so
+channel-major (C-order) vs time-major is invisible downstream, but it silently
 permutes every feature.
 
 Report -> outputs/eeg_extraction_audit.txt

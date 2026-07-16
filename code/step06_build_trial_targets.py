@@ -3,19 +3,20 @@
 Build the regression targets: for each encoding trial, the T5 vector of the word
 that was actually on screen.
 
-The join that makes the whole project work. step04 produced 576 embeddings in
-one order; step05 produced this session's 576 trials in presentation order.
-Those two orders are unrelated, so every trial's word is looked up by name in
-peers_word_order.csv and its row pulled from the embedding matrix.
+This is the join the rest of the project depends on. step04 produced 576
+embeddings in one order; step05 produced this session's 576 trials in
+presentation order. The two orders are unrelated, so I look up every trial's
+word by name in peers_word_order.csv and pull its row from the embedding matrix.
 
     trial i shows word "OCEAN"
       -> peers_word_order says OCEAN is row 412
       -> Y[i] = embeddings[412]
 
-Row i of Y must correspond to row i of X, or ridge would be trained to predict
-the wrong word's embedding from a trial's EEG -- silently, with no error and a
-plausible-looking result. That is why this stage does nothing but the lookup,
-and why it refuses to continue on any unmatched word rather than dropping it.
+Row i of Y has to line up with row i of X. Otherwise ridge gets trained to
+predict the wrong word's embedding from a trial's EEG, and it does so silently,
+with no error and a result that looks plausible. So this stage does nothing but
+the lookup, and it refuses to continue on any unmatched word instead of dropping
+it.
 
 Outputs:
     outputs/Y_t5.npy                    (576 x 1024, float32) targets in trial order
@@ -66,10 +67,10 @@ def main():
         sys.exit(f"ERROR: peers_word_order rows ({len(order)}) != embedding rows "
                  f"({emb.shape[0]})")
 
-    # Case-fold before joining: the events files and the word pool do not agree
-    # on casing. Uniqueness is enforced *after* folding, because two words that
-    # differ only in case would collapse into one key here and silently give
-    # every one of their trials the same embedding.
+    # Case-fold before joining, since the events files and the word pool don't
+    # agree on casing. I check uniqueness after folding, not before: two words
+    # differing only in case would collapse into one key here and quietly give
+    # all of their trials the same embedding.
     order["_wU"] = order.word.str.upper()
     if order["_wU"].duplicated().any():
         dups = order.loc[order["_wU"].duplicated(), "_wU"].tolist()
@@ -77,8 +78,8 @@ def main():
     word_to_row = dict(zip(order["_wU"], order.row_index.astype(int)))
 
     # -----------------------------------------------------------------
-    # Build Y in EXACT encoding_trials order.
-    # Indexed by position, never by a pandas merge: a merge can reorder or
+    # Build Y in the exact encoding_trials order.
+    # Index by position, not with a pandas merge. A merge can reorder or
     # duplicate rows, which would break the X/Y row correspondence that ridge
     # depends on and that nothing downstream would catch.
     # -----------------------------------------------------------------

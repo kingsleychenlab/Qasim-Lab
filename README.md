@@ -1,56 +1,56 @@
-# AI Word-Embedding Fidelity and Memory
+# Word embeddings, EEG, and memory
 
-Do you remember a word better if your brain's response to it looks more like the
-AI's representation of that word?
+The question here is simple to state: if your brain's response to a word looks
+more like an AI model's version of that word, do you remember the word better?
 
-Short answer: no. We tested it on 4, 16, and then 32 subjects. The effect was
-absent every time.
+The answer came back no. I ran the check three times, on 4 subjects, then 16,
+then 32, and the effect never showed up.
 
-Dataset: PEERS / OpenNeuro [ds004395](https://openneuro.org/datasets/ds004395)
-v2.0.0, the `ltpFR2` task. Subjects read word lists while wearing a 129-channel
-EEG cap, then tried to recall them. We use `ltpFR2` because its 576-word pool is
-exactly the word list we built embeddings for.
+The data is PEERS / OpenNeuro [ds004395](https://openneuro.org/datasets/ds004395)
+v2.0.0, the `ltpFR2` task. People read lists of words while wearing a 129-channel
+EEG cap, then tried to recall them a moment later. I picked `ltpFR2` because its
+576-word pool is the exact list I built embeddings for.
 
 ## The idea
 
-When you read a word, your brain makes a distinctive electrical response. A
-language model like T5 also turns that word into a list of numbers (an
-"embedding") that captures its meaning.
+Reading a word sets off a distinctive bit of electrical activity in your brain. A
+language model like T5 also turns a word into a list of numbers, an "embedding,"
+that stands in for what the word means.
 
 A [2025 Nature Communications paper](https://www.nature.com/articles/s41467-025-65499-0)
-showed you can partly work out which word someone is reading by mapping their
-EEG onto that word's embedding. We reused that idea and added a memory question
-the paper does not ask: if the mapping works *better* on a given word, is that
-word remembered more often?
+showed you can partly recover which word someone is reading by mapping their EEG
+onto that word's embedding. I took that setup and added a question the paper
+doesn't ask: when the mapping works better for a given word, does that word get
+remembered more often?
 
-The pipeline:
+The chain looks like this:
 
 ```
-word appears  ->  EEG from 300-800 ms after it appears
+word appears  ->  take the EEG from 300-800 ms after it shows up
               ->  ridge regression predicts the word's T5 embedding
-              ->  cosine similarity between predicted and true embedding
-              ->  we call that "embedding fidelity"
-              ->  does higher fidelity mean better recall?
+              ->  cosine similarity between the predicted and the real embedding
+              ->  call that number "embedding fidelity"
+              ->  ask whether higher fidelity goes with better recall
 ```
 
-## What we found
+## What came out
 
 32 subjects, 64 sessions, 36,864 words studied.
 
-Model: `recalled ~ embedding_fidelity + session + (1|subject) + (1|word)`.
-Fidelity is z-scored, so the odds ratio is the change in recall odds per 1
-standard deviation of fidelity.
+The model was `recalled ~ embedding_fidelity + session + (1|subject) + (1|word)`.
+Fidelity is z-scored, so the odds ratio is the change in recall odds for a
+one-standard-deviation change in fidelity.
 
 | Result | Value | What it means |
 | --- | --- | --- |
-| odds ratio | 0.986 | 1.0 would mean no effect. This is 1.0 for practical purposes. |
-| 95% interval | [0.963, 1.009] | Contains 1.0, so we cannot rule out "no effect". |
+| odds ratio | 0.986 | 1.0 would be no effect. For practical purposes this is 1.0. |
+| 95% interval | [0.963, 1.009] | Contains 1.0, so "no effect" is not ruled out. |
 | p-value | 0.218 | Well above 0.05. Not significant. |
 | remembered fidelity | 0.84501 | Average for words later recalled. |
-| forgotten fidelity | 0.84553 | Average for words later forgotten. Same number. |
-| difference | -0.00052 | Essentially zero, and slightly the wrong way. |
+| forgotten fidelity | 0.84553 | Average for words later forgotten. Basically the same. |
+| difference | -0.00052 | About zero, and if anything the wrong way. |
 
-Adding subjects did not change it:
+Adding subjects didn't change anything:
 
 | | 4 subjects | 16 subjects | 32 subjects |
 | --- | --- | --- | --- |
@@ -60,20 +60,23 @@ Adding subjects did not change it:
 | 95% interval | [0.913, 1.033] | [0.947, 1.013] | [0.963, 1.009] |
 | p-value | 0.354 | 0.220 | 0.218 |
 
-With eight times the data the odds ratio moved *toward* 1.0 and the interval
-tightened around it. More data made the "no effect" answer sharper instead of
-turning up a hidden effect. See `results/figures/scaling_progression.png`.
+Going from 4 subjects to 32 is eight times the data, and all it did was pull the
+odds ratio a little closer to 1.0 and shrink the interval around it. The extra
+data didn't turn up a hidden effect. It made "no effect" a sharper answer. See
+`results/figures/scaling_progression.png`.
 
-## Why the answer is no
+## Why it's a no
 
-The fidelity score looks high, around 0.845. That is misleading.
+The fidelity score sits around 0.845, which looks high until you see where it
+comes from.
 
-All T5 word vectors point in a broadly similar direction and have large norms
-(about 2,165 on average). So almost any prediction scores about 0.85, whether or
-not it identified the word. A high cosine here is not evidence of decoding.
+Every T5 word vector points in roughly the same direction and has a big norm
+(about 2,165 on average). Because of that, almost any prediction lands near a
+cosine of 0.85 whether or not it actually identified the word. A high cosine here
+doesn't mean the decoding worked.
 
-The real test is whether the prediction can pick the correct word out of all 576.
-It cannot:
+The real test is whether a prediction can pick its own word out of the full set
+of 576. It can't:
 
 | Check | Real model | Shuffled labels | Chance |
 | --- | --- | --- | --- |
@@ -81,26 +84,27 @@ It cannot:
 | top-5 retrieval | 0.0074 | 0.0088 | 0.0087 |
 | top-10 retrieval | 0.0164 | 0.0180 | 0.0174 |
 
-The real model matches a control trained on shuffled labels. Word decoding sits
-at chance.
+The real model does no better than a control trained on shuffled labels. Word
+decoding is at chance.
 
-That explains the null. There was no working decoder, so there was no fidelity
-signal for memory to track. Adding subjects cannot recover a signal that was
-never there. The limit is the decoding method, not the sample size.
+That is the whole story behind the null. There was no working decoder, so there
+was no fidelity signal for memory to track. You can't recover a signal by adding
+subjects when the signal was never there in the first place. The limit is the
+decoding method, not the number of people I ran.
 
-So a null is what you would expect here. What the project delivers is a working,
-checked, reproducible method and a result you can trust, not a discovery.
+So a null is what I'd expect here. What the project actually gives you is a
+pipeline that works and checks out end to end, not a discovery.
 
 ## How it works
 
-| Stage | What we did |
+| Stage | What I did |
 | --- | --- |
-| Embeddings | `google-t5/t5-large`, encoder only (`T5EncoderModel`, no decoder). Take the middle encoder layer, `hidden_states[12]`. If a word splits into pieces, average them. Drop the end-of-sequence and padding tokens. Result: one 1024-number vector per word, a 576 x 1024 matrix. |
+| Embeddings | `google-t5/t5-large`, encoder only (`T5EncoderModel`, no decoder). Take the middle encoder layer, `hidden_states[12]`. When a word splits into pieces, average them. Drop the end-of-sequence and padding tokens. That leaves one 1024-number vector per word, a 576 x 1024 matrix. |
 | Recall labels | Free recall only. A studied word counts as recalled if the same item number comes back during the recall phase of the same list. Recognition data is never used. |
-| EEG window | 300-800 ms after the word appears. At 500 Hz that is `sample+150` to `sample+400`, stop exclusive, so 250 timepoints. Across 129 channels that is 32,250 numbers per word. Raw signal, no filtering or baseline correction. |
-| Decoding | Ridge regression, `alpha = 10000`, fit separately for each subject and session. 5-fold cross-validation, always tested on words the model did not train on. The scaler is fit on training folds only. |
-| Fidelity | `cos(predicted, true)`, the angle between the predicted and true embedding. |
-| Memory model | Logistic mixed-effects, since recall is yes/no. Session is a fixed effect. Subject and word get random intercepts, because some people and some words are simply easier. |
+| EEG window | 300-800 ms after the word appears. At 500 Hz that runs from `sample+150` to `sample+400`, stop exclusive, so 250 timepoints. Across 129 channels that's 32,250 numbers per word. Raw signal, no filtering or baseline correction. |
+| Decoding | Ridge regression, `alpha = 10000`, fit separately for each subject and session. 5-fold cross-validation, always tested on words the model didn't train on. The scaler is fit on the training folds only. |
+| Fidelity | `cos(predicted, true)`, the angle between the predicted and the real embedding. |
+| Memory model | Logistic mixed-effects, because recall is yes/no. Session is a fixed effect. Subject and word get random intercepts, since some people and some words are just easier. |
 
 The math is written out in [`results/methods_and_math.md`](results/methods_and_math.md).
 
@@ -109,13 +113,13 @@ The math is written out in [`results/methods_and_math.md`](results/methods_and_m
 | Path | Contents |
 | --- | --- |
 | [`code/`](code/) | The pipeline. One `stepNN_` script per stage, plus the audit scripts. See [`code/README.md`](code/README.md). |
-| [`results/`](results/) | Everything we found: summaries, figures, tables, embeddings, checks. See [`results/README.md`](results/README.md). |
-| `outputs/` | Scratch space the scripts write to. Regenerable, so it is git-ignored. |
+| [`results/`](results/) | Everything I found: the writeup, figures, tables, embeddings, and checks. See [`results/README.md`](results/README.md). |
+| `outputs/` | Scratch space the scripts write to. Regenerable, so it's git-ignored. |
 
-Best starting point:
+If you only read one thing, read
 [`results/summary_4_vs_16_vs_32_subjects.txt`](results/summary_4_vs_16_vs_32_subjects.txt).
 
-The finished 576 x 1024 embedding matrix ships in
+The finished 576 x 1024 embedding matrix is committed in
 [`results/embeddings/`](results/embeddings/), so you can look at it without
 rebuilding it.
 
@@ -126,12 +130,12 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r code/requirements.txt
 ```
 
-The raw EEG is not in this repo. ds004395 is about 8.7 TB and one session alone
-is roughly 600 MB, so the scripts stream one session at a time from OpenNeuro's
+The raw EEG isn't in this repo. ds004395 is about 8.7 TB, and a single session is
+roughly 600 MB, so the scripts stream one session at a time from OpenNeuro's
 public S3 bucket.
 
 ```bash
-# Rebuild the T5 embeddings. Optional, they are already in results/embeddings/.
+# Rebuild the T5 embeddings. Optional, they're already in results/embeddings/.
 python code/step04_extract_t5_embeddings.py
 
 # Download sessions, build the trials and X/Y matrices, run the ridge CV.
@@ -145,14 +149,14 @@ python code/step11_run_memory_model.py --input outputs/all_sessions32_fidelity_r
 python code/step13_build_results_package.py --tag 32
 ```
 
-A session is only used if it is `ltpFR2`, has all 576 words, matches our word
-list completely, and the recording is long enough that every word's 300-800 ms
-window fits inside it. Plenty of `ltpFR2` recordings are cut short and get
-rejected here.
+A session is only used if it's `ltpFR2`, has all 576 words, matches the word list
+completely, and the recording is long enough that every word's 300-800 ms window
+fits inside it. A lot of `ltpFR2` recordings are cut short and get dropped at this
+gate.
 
-## Checks we ran
+## Checks I ran
 
-Each stage was verified on its own. Details in
+Each stage was verified on its own. The details are in
 [`results/validation/`](results/validation/).
 
 | Check | Result |
@@ -164,33 +168,33 @@ Each stage was verified on its own. Details in
 | Independent rerun of the whole pipeline | Reproduced the 4-subject numbers exactly (odds ratio 0.9714, p 0.3544) |
 | Second version that fits ridge per subject instead of per session | Same conclusion (odds ratio 0.9695, p 0.3236) |
 
-## Limits, and what to try next
+## Limits, and what I'd try next
 
-The decoder never beat chance, so the memory test was asking whether a signal we
-could not detect predicts recall. That is the main limit. The sample (32
-subjects) is still modest, and the features are raw broadband voltage with no
-time-frequency analysis, baseline correction, or spatial filtering.
+The decoder never beat chance, which means the memory test was asking whether a
+signal I couldn't detect predicts recall. That's the main limit. The sample (32
+subjects) is still on the small side, and the features are raw broadband voltage
+with no time-frequency analysis, baseline correction, or spatial filtering.
 
-The Nature paper gets real decoding, but with much heavier machinery: a deep
-CNN plus Transformer, a 3-second window, filtered and resampled EEG, and 723
-participants reading about 5 million words. They also score retrieval accuracy
-rather than raw cosine. Our lighter linear setup never reaches that regime, so
-their result and ours do not conflict.
+The Nature paper does get real decoding, but with much heavier machinery: a deep
+CNN plus a Transformer, a 3-second window, filtered and resampled EEG, and 723
+participants reading around 5 million words. They also score retrieval accuracy
+instead of raw cosine. My lighter linear setup never gets near that regime, so
+their result and mine don't actually conflict.
 
-Worth trying, in order:
+If I picked this back up, roughly in order:
 
 1. Use their preprocessing and the longer window.
 2. Score decoding by top-k retrieval, not raw cosine.
 3. Move to richer features, or a small neural decoder.
 4. Add more subjects.
 
-Re-ask the memory question only once decoding clears chance.
+The memory question is only worth re-asking once decoding clears chance.
 
 ## Conclusion
 
-> The project tested whether later-remembered words showed higher EEG-to-AI
-> embedding fidelity than forgotten words. The final session-aware logistic
-> mixed-effects model did not support this prediction: embedding fidelity was
-> not significantly associated with later recall.
+The project tested whether words that were later remembered showed higher
+EEG-to-AI embedding fidelity than words that were forgotten. The final
+session-aware logistic mixed-effects model didn't back that up: fidelity was not
+significantly tied to later recall.
 
 Data from PEERS / OpenNeuro ds004395. Terms in `LICENSE`.

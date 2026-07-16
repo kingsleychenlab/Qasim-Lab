@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Run the memory model on a scaled fidelity table and place it against the
+Run the memory model on a scaled fidelity table and line it up against the
 earlier runs.
 
-The scale-up story lives here. The pipeline is held fixed and only the number of
-subjects changes, so the question this answers is: does the null survive more
-data, or was it just an underpowered sample? Reports the odds ratio next to the
-4- and 16-subject results, and re-aggregates the word-retrieval sanity checks
-plus the shuffled-label control across every session in the run.
+This is where the scale-up gets checked. The pipeline stays fixed and only the
+number of subjects changes, so what it answers is whether the null survives more
+data or whether the first run was just underpowered. It prints the odds ratio
+alongside the 4- and 16-subject results, and re-aggregates the word-retrieval
+sanity checks and the shuffled-label control over every session in the run.
 
-Works for any N. Invokes step11 rather than reimplementing the model, so the
-scaled runs and the original 4-subject run are fit by the exact same code.
+Works for any N. It calls step11 instead of reimplementing the model, so the
+scaled runs and the original 4-subject run go through the exact same code.
 
 Usage:
   python code/step12_analyze_results.py --input outputs/all_sessions32_fidelity_results.csv --tag 32
@@ -28,10 +28,10 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = sys.executable
 SUBJ = os.path.join(HERE, "outputs/subjects")
 
-# Previously-verified results, hardcoded so a new run can be compared without
-# refitting them (the 4- and 16-subject fidelity tables are large and the 16 one
-# is no longer kept). These are read only for the comparison table -- nothing
-# here feeds the model. If either run were ever refit, update these to match.
+# Results from the earlier runs, hardcoded so a new run can be compared without
+# refitting them (the 4- and 16-subject fidelity tables are large, and the 16 one
+# isn't kept anymore). These only feed the comparison table, not the model. If
+# either run ever gets refit, update these to match.
 REF = {
     4:  {"subjects": 4,  "sessions": 8,  "trials": 4608,  "recalled": 2423, "forgotten": 2185,
          "rem": 0.84627, "forg": 0.84711, "diff": -0.00084, "OR": 0.9714, "coef": -0.0291,
@@ -65,9 +65,9 @@ def main():
                     "--out-meta", os.path.join(HERE, f"outputs/final_memory_model{a.tag}_metadata.json")],
                    check=True, capture_output=True, text=True)
     fmr = pd.read_csv(fm_csv)
-    # The headline number: the GLMM on raw_cosine. step11 also writes the
-    # fallback fit and three supplementary metrics to the same CSV, so both
-    # filters are needed to pick out the one row the outline asks about.
+    # The headline number is the GLMM on raw_cosine. step11 also writes the
+    # fallback fit and three supplementary metrics to the same CSV, so it takes
+    # both filters to pull out the one row the plan asks about.
     mr = fmr[(fmr.metric == "raw_cosine") & (fmr.model.str.contains("GLMM"))].iloc[0]
     OR, coef, p = float(mr.odds_ratio), float(mr.coef_per_sd), float(mr.p_approx)
     ci = [float(mr.ci_low), float(mr.ci_high)]; concl = str(mr.direction)

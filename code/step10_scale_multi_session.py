@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-Same as step09, but several sessions per subject -- which is what lets the
+Same as step09, but several sessions per subject, which is what lets the
 outline's model include a session term.
 
-This is the stage that actually produced the reported runs. The outline's model
-is `recalled ~ embedding_fidelity + session + (1|subject) + (1|word)`, and a
+This is the stage that produced the reported runs. The outline's model is
+`recalled ~ embedding_fidelity + session + (1|subject) + (1|word)`, and a
 `session` term needs more than one session per subject to estimate. step09 takes
 one session each; this takes up to K.
 
-Deliberately reuses step09.process_session unchanged, rather than reimplementing
-the chain: download -> encoding_trials -> Y_t5 -> X_eeg -> ridge metrics. Only
-the *selection* differs. If the two ever drifted apart, the multi-session runs
-would no longer be comparable to the single-session ones, and the whole 4 vs 16
-vs 32 comparison would be meaningless.
+It reuses step09.process_session unchanged instead of reimplementing the chain
+(download -> encoding_trials -> Y_t5 -> X_eeg -> ridge metrics). Only the
+selection differs. If the two ever drifted apart, the multi-session runs would
+no longer be comparable to the single-session ones, and the whole 4 vs 16 vs 32
+comparison would be meaningless.
 
 Same validity screen as step09 (task==ltpFR2, WORD==576, peers coverage 576/576,
 576/576 valid 300-800 ms windows), checked from the EDF header before download.

@@ -2,7 +2,7 @@
 """
 Re-derive `recalled` from the raw events and check it against what step05 wrote.
 
-recalled is the outcome variable -- the entire project is a claim about it. If
+recalled is the outcome variable, so the whole project is a claim about it. If
 it is wrong, every downstream number is wrong in a way no amount of careful
 modelling can detect, because the model has no way to know its labels are bad.
 So this rebuilds the column from events.tsv independently and compares row by
@@ -10,10 +10,10 @@ row. Agreement must be 576/576.
 
 Recall rule (free recall only):
     For each WORD (studied) event, recalled = 1 iff a REC_WORD (freely recalled)
-    event with the SAME item_num occurs in the SAME trial/list; else 0.
+    event with the same item_num occurs in the same trial/list; else 0.
 
-Two things it deliberately refuses to do, each a way the label could be
-inflated into a false positive result:
+Two things this deliberately does not do, each a way the label could be inflated
+into a false positive result:
 
   - No recognition data. Not RECOG_* events, not recog_resp, not recog_conf.
     Recognition is a different memory process with a much higher hit rate;
@@ -22,7 +22,7 @@ inflated into a false positive result:
     matching item_num without pinning the trial would mark a word recalled in
     one list as recalled in every list it appeared in.
 
-item_num is the match key; item_name/word is printed for readability and
+item_num is the match key. item_name/word is printed for readability and
 cross-checked, never used as the primary join.
 
 Report -> outputs/recall_label_audit.txt
@@ -39,7 +39,7 @@ from common import Tee
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 N_TRIALS = 576
 AUDIT_TRIALS = [1, 12, 24]
-# Columns that would indicate recognition being used — must NOT be referenced.
+# Columns that would indicate recognition being used, must not be referenced.
 RECOG_COLS = ["recog_resp", "recog_conf", "recog_rt", "recog_acc"]
 
 
@@ -71,7 +71,7 @@ def main():
         log(f"events.tsv      : {ev_rel}")
         log(f"events columns  : {list(ev.columns)}")
 
-        # ---- confirm we are NOT using recognition information -----------
+        # ---- confirm we are not using recognition information -----------
         recog_events = ev[ev.trial_type.astype(str).str.upper().str.startswith("RECOG")]
         recog_cols_present = [c for c in RECOG_COLS if c in ev.columns]
         log(f"\nRECOG_* events present in file : {len(recog_events)} "
@@ -92,8 +92,8 @@ def main():
         rec_valid = rec_valid[rec_valid.item_num != -1]
         recall_keys = set(zip(rec_valid.trial.astype(int),
                               rec_valid.item_num.astype(int)))
-        # For a cross-trial contrast (to PROVE within-trial matters), also build
-        # the set of item_nums recalled ANYWHERE in the session.
+        # For a cross-trial contrast (to show within-trial matters), also build
+        # the set of item_nums recalled anywhere in the session.
         recalled_any_item = set(rec_valid.item_num.astype(int))
 
         # ---- recompute recalled per encoding_trials row (exact order) ---

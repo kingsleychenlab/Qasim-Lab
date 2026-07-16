@@ -2,24 +2,23 @@
 """
 Render the presentable results/ package: summary tables + figures.
 
-Reads only the COMMITTED, curated tables in results/tables/ (not the
+Reads only the committed, curated tables in results/tables/ (not the
 regenerable outputs/ working directory), so this script runs on a fresh clone:
 
     results/tables/trial_fidelity_<NN>subjects.csv      (per-trial fidelity)
     results/tables/memory_model_<NN>subjects_results.csv (fitted model)
     results/embeddings/peers_t5large_embeddings.npy      (for the norms check)
 
-Performs no analysis of its own -- every number it draws was produced upstream
-by step08 (fidelity) and step11 (memory model). If a figure disagrees with a
-summary, the bug is here, not in the result.
+It runs no analysis of its own. Every number it draws was produced upstream by
+step08 (fidelity) and step11 (memory model), so if a figure disagrees with a
+summary the bug is in this script, not in the result.
 
-Figures are deliberately few, and each answers one question a reader asks:
-  1. What is the method?                      -> pipeline_flow
-  2. Do remembered and forgotten words differ? -> remembered_vs_forgotten_fidelity
-  3. Is the decoder doing anything at all?     -> decoding_chance_check,
-                                                  raw_vs_centered_metrics
-  4. Does the model back that up?              -> final_model_odds_ratios
-  5. Does more data change the answer?         -> scaling_progression
+There are only a few figures, one per question a reader tends to ask. The
+method overview is pipeline_flow. Whether remembered and forgotten words differ
+is remembered_vs_forgotten_fidelity. Whether the decoder does anything is
+decoding_chance_check and raw_vs_centered_metrics. Whether the model agrees is
+final_model_odds_ratios, and whether more data changes the answer is
+scaling_progression.
 
 Usage:
     python code/step13_build_results_package.py            # headline: 32 subjects

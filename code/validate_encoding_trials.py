@@ -90,8 +90,9 @@ def main():
     check("all eeg_file paths exist on disk", not missing_paths,
           f"missing: {missing_paths}")
 
-    # 6b. EEG WINDOW-FIT: full [win_start, win_stop] window inside the recording,
-    #     for every row (authoritative, via MNE). Also re-checks no sentinels.
+    # 6b. window fit: the full [win_start, win_stop] window must sit inside the
+    #     recording for every row, checked directly via MNE. Also re-checks no
+    #     sentinels.
     if not missing_paths:
         import mne
         eeg_path = df.eeg_file.iloc[0]
