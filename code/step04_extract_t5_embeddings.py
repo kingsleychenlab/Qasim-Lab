@@ -68,16 +68,15 @@ def select_device():
 
 def load_words(input_path):
     """Load the PEERS word list, strip whitespace, keep the order, and check the count."""
-    df = pd.read_csv(input_path)
-    if "word" not in df.columns:
+    words_df = pd.read_csv(input_path)
+    if "word" not in words_df.columns:
         raise ValueError(
             f"Input CSV '{input_path}' must have a 'word' column. "
-            f"Found columns: {list(df.columns)}"
+            f"Found columns: {list(words_df.columns)}"
         )
     # Strip whitespace but keep the original order exactly.
-    words = [str(w).strip() for w in df["word"].tolist()]
+    words = [str(w).strip() for w in words_df["word"].tolist()]
 
-    # Do not silently continue if the word count is not 576.
     if len(words) != EXPECTED_WORDS:
         raise ValueError(
             f"Expected exactly {EXPECTED_WORDS} PEERS words, but found {len(words)} "
@@ -133,15 +132,11 @@ def main():
                         help="Print tokenization debug for the first N words.")
     args = parser.parse_args()
 
-    # ------------------------------------------------------------------
-    # 1. Load words
-    # ------------------------------------------------------------------
+    # Load words
     words = load_words(args.input)
     print(f"Loaded {len(words)} words from {args.input} (order preserved).")
 
-    # ------------------------------------------------------------------
-    # 2. Device + model
-    # ------------------------------------------------------------------
+    # Device + model
     device = select_device()
     print(f"Using device: {device}")
 
@@ -149,7 +144,7 @@ def main():
     tokenizer = T5Tokenizer.from_pretrained(args.model)
 
     print(f"Loading T5EncoderModel (encoder only): {args.model}")
-    model = T5EncoderModel.from_pretrained(args.model, output_hidden_states=True)
+    model = T5EncoderModel.from_pretrained(args.model)
     model.to(device)
     model.eval()
 
@@ -166,9 +161,7 @@ def main():
     if layer != derived_middle:
         print(f"NOTE: requested layer {layer} differs from derived middle {derived_middle}.")
 
-    # ------------------------------------------------------------------
-    # 3. Batched extraction
-    # ------------------------------------------------------------------
+    # Batched extraction
     embeddings = np.zeros((len(words), EXPECTED_DIM), dtype=np.float32)
     debug_budget = max(0, args.debug_first)
 
@@ -176,14 +169,14 @@ def main():
         for start in tqdm(range(0, len(words), args.batch_size), desc="Encoding"):
             batch_words = words[start:start + args.batch_size]
 
-            enc = tokenizer(
+            encoded = tokenizer(
                 batch_words,
                 return_tensors="pt",
                 padding=True,
                 truncation=True,
             )
-            input_ids = enc["input_ids"].to(device)
-            attention_mask = enc["attention_mask"].to(device)
+            input_ids = encoded["input_ids"].to(device)
+            attention_mask = encoded["attention_mask"].to(device)
 
             outputs = model(
                 input_ids=input_ids,
@@ -213,26 +206,24 @@ def main():
                 word_vector = layer_hidden[i][valid_mask].mean(dim=0)
                 embeddings[global_idx] = word_vector.detach().cpu().numpy()
 
-                # ---- Optional debugging output for the first N words ----
+                # Optional debugging output for the first N words
                 if debug_budget > 0:
                     ids = input_ids[i].tolist()
-                    toks = tokenizer.convert_ids_to_tokens(ids)
+                    tokens = tokenizer.convert_ids_to_tokens(ids)
                     kept = valid_mask.tolist()
-                    included = [t for t, k in zip(toks, kept) if k]
-                    excluded = [t for t, k in zip(toks, kept) if not k]
+                    included = [t for t, k in zip(tokens, kept) if k]
+                    excluded = [t for t, k in zip(tokens, kept) if not k]
                     print("\n--- DEBUG word "
                           f"[{global_idx}] {batch_words[i]!r} ---")
                     print(f"  input_ids : {ids}")
-                    print(f"  tokens    : {toks}")
+                    print(f"  tokens    : {tokens}")
                     print(f"  included in mean : {included}")
                     print(f"  excluded (EOS/pad): {excluded}")
                     print(f"  '{tokenizer.eos_token}' excluded: "
                           f"{tokenizer.eos_token in excluded}")
                     debug_budget -= 1
 
-    # ------------------------------------------------------------------
-    # 4. Shape check
-    # ------------------------------------------------------------------
+    # Shape check
     if embeddings.shape != (EXPECTED_WORDS, EXPECTED_DIM):
         raise RuntimeError(
             f"Embedding matrix has shape {embeddings.shape}, "
@@ -240,9 +231,7 @@ def main():
         )
     print(f"\nEmbedding matrix shape: {embeddings.shape}  (OK)")
 
-    # ------------------------------------------------------------------
-    # 5. Save outputs
-    # ------------------------------------------------------------------
+    # Save outputs
     np.save(args.out_matrix, embeddings)
     print(f"Saved matrix -> {args.out_matrix}")
 

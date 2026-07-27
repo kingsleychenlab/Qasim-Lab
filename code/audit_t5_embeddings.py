@@ -50,18 +50,18 @@ def select_device():
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--model", default="google-t5/t5-large")
-    ap.add_argument("--embeddings", default=os.path.join(HERE, "results/embeddings/peers_t5large_embeddings.npy"))
-    ap.add_argument("--order", default=os.path.join(HERE, "results/embeddings/peers_word_order.csv"))
-    ap.add_argument("--layer", type=int, default=LAYER)
-    ap.add_argument("--words", nargs="+", default=WORDS)
-    ap.add_argument("--device", default=None, help="force cpu/mps/cuda (default: auto)")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model", default="google-t5/t5-large")
+    parser.add_argument("--embeddings", default=os.path.join(HERE, "results/embeddings/peers_t5large_embeddings.npy"))
+    parser.add_argument("--order", default=os.path.join(HERE, "results/embeddings/peers_word_order.csv"))
+    parser.add_argument("--layer", type=int, default=LAYER)
+    parser.add_argument("--words", nargs="+", default=WORDS)
+    parser.add_argument("--device", default=None, help="force cpu/mps/cuda (default: auto)")
+    args = parser.parse_args()
 
-    for p in (args.embeddings, args.order):
-        if not os.path.isfile(p):
-            sys.exit(f"ERROR: required input not found: {p}")
+    for path in (args.embeddings, args.order):
+        if not os.path.isfile(path):
+            sys.exit(f"ERROR: required input not found: {path}")
 
     saved = np.load(args.embeddings)
     word_to_row = load_word_to_row(args.order)
@@ -80,41 +80,45 @@ def main():
 
     max_diffs = []
     with torch.no_grad():
-        for w in args.words:
-            wU = w.upper()
-            if wU not in word_to_row:
-                print(f"[SKIP] {w!r} not in peers_word_order.csv")
+        for word in args.words:
+            word_upper = word.upper()
+            if word_upper not in word_to_row:
+                print(f"[SKIP] {word!r} not in peers_word_order.csv")
                 continue
-            enc = tok([w], return_tensors="pt", padding=True, truncation=True)
-            input_ids = enc["input_ids"].to(device)
-            attn = enc["attention_mask"].to(device)
-            out = model(input_ids=input_ids, attention_mask=attn, output_hidden_states=True)
+            encoded = tok([word], return_tensors="pt", padding=True, truncation=True)
+            input_ids = encoded["input_ids"].to(device)
+            attention_mask = encoded["attention_mask"].to(device)
+            encoder_output = model(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
             # hidden_states is num_layers+1 long: index 0 is the embedding
             # output, 1..24 are the encoder blocks. So [12] is the middle block,
             # not the 12th of 25.
-            layer_hidden = out.hidden_states[args.layer][0]  # (seq, 1024)
+            layer_hidden = encoder_output.hidden_states[args.layer][0]  # (seq, 1024)
 
             # The word's own subword tokens only. T5 appends </s> to every
             # sequence, and averaging it in would drag all 576 vectors toward a
             # shared constant, inflating every cosine downstream.
-            valid = attn[0].bool() & (input_ids[0] != eos_id) & (input_ids[0] != pad_id)
-            vec = layer_hidden[valid].mean(dim=0).float().cpu().numpy().astype(np.float32)
+            keep_tokens = attention_mask[0].bool() & (input_ids[0] != eos_id) & (input_ids[0] != pad_id)
+            recomputed = layer_hidden[keep_tokens].mean(dim=0).float().cpu().numpy().astype(np.float32)
 
-            row = word_to_row[wU]
-            saved_vec = saved[row]
-            max_abs = float(np.max(np.abs(vec - saved_vec)))
+            row_index = word_to_row[word_upper]
+            saved_row = saved[row_index]
+            max_abs = float(np.max(np.abs(recomputed - saved_row)))
             max_diffs.append(max_abs)
 
-            toks = tok.convert_ids_to_tokens(input_ids[0].tolist())
-            included = [t for t, k in zip(toks, valid.tolist()) if k]
+            tokens = tok.convert_ids_to_tokens(input_ids[0].tolist())
+            averaged_tokens = [token for token, keep in zip(tokens, keep_tokens.tolist()) if keep]
             status = "OK (<1e-5)" if max_abs < 1e-5 else \
                      ("close (<1e-3)" if max_abs < 1e-3 else "LARGE")
-            print(f"{w:<10} peers_row={row:<3} tokens_avgd={included}")
+            print(f"{word:<10} peers_row={row_index:<3} tokens_avgd={averaged_tokens}")
             print(f"           max|recomputed - saved| = {max_abs:.3e}   [{status}]\n")
 
-    if max_diffs:
-        print(f"overall max abs diff across audited words: {max(max_diffs):.3e}")
-        print("expected: near 0 (~<1e-5) if saved embeddings are reproducible.")
+    if not max_diffs:
+        sys.exit("ERROR: none of the requested words were found in peers_word_order.csv; nothing was compared.")
+    worst = max(max_diffs)
+    print(f"overall max abs diff across audited words: {worst:.3e}")
+    print("expected: near 0 (~<1e-5) if saved embeddings are reproducible.")
+    if worst >= 1e-3:
+        sys.exit(f"FAIL: max abs diff {worst:.3e} >= 1e-3 — saved embeddings were not produced by this recipe.")
 
 
 if __name__ == "__main__":

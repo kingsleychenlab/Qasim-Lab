@@ -29,6 +29,7 @@ separate steps.)
 import json
 import os
 import subprocess
+import sys
 
 import numpy as np
 import pandas as pd
@@ -60,12 +61,11 @@ def sess_dir(sub, ses):
     return os.path.join(HERE, "outputs", "subjects", f"sub-{sub}_ses-{ses}")
 
 
-# =====================================================================
 log("=" * 80)
 log("NEUROLAB FINAL PRECISION AUDIT (programmatic)")
 log("=" * 80)
 
-# --- 1. structure ---------------------------------------------------
+# 1. structure
 log("\n## 1. STRUCTURE")
 req = ["results/embeddings/peers_words.csv", "results/embeddings/peers_word_order.csv", "results/embeddings/peers_t5large_embeddings.npy",
        "results/embeddings/embedding_metadata.json",
@@ -85,7 +85,7 @@ for f in opt:
     p = os.path.isfile(os.path.join(HERE, f))
     log(f"[INFO] optional {f}: {'present' if p else 'absent'}")
 
-# --- 2. T5 numeric + metadata ---------------------------------------
+# 2. T5 numeric + metadata
 log("\n## 2. T5 EMBEDDING INTEGRITY")
 words = pd.read_csv(os.path.join(HERE, "results/embeddings/peers_words.csv"))
 order = pd.read_csv(os.path.join(HERE, "results/embeddings/peers_word_order.csv"))
@@ -118,7 +118,7 @@ ck("t5", "metadata shape 576x1024", meta.get("matrix_shape") == [576, 1024], str
 ck("t5", "word order consistent (order==embeddings CSV order)",
    (order.word.str.upper().is_unique), f"{order.word.nunique()} unique words")
 
-# --- 3. session validity --------------------------------------------
+# 3. session validity
 log("\n## 3. SESSION VALIDITY")
 comb = pd.read_csv(os.path.join(HERE, "outputs/all_sessions_fidelity_results.csv"))
 peers = set(order.word.str.upper())
@@ -127,8 +127,7 @@ ck("session", "8 sessions", comb.groupby(['subject', 'session']).ngroups == 8,
    f"{comb.groupby(['subject','session']).ngroups}")
 per_sub = comb.groupby('subject').session.nunique()
 ck("session", "2 sessions per subject", (per_sub == 2).all(), per_sub.to_dict())
-expected = {("LTP269", 12), ("LTP269", 20), ("LTP293", 5), ("LTP293", 22),
-            ("LTP299", 2), ("LTP299", 6), ("LTP303", 10), ("LTP303", 22)}
+expected = set(SESSIONS)
 present = set(map(tuple, comb[['subject', 'session']].drop_duplicates().values.tolist()))
 ck("session", "expected subject/session set matches", present == expected,
    f"{sorted(present)}")
@@ -150,7 +149,7 @@ ck("session", "recalled/forgotten = 2423/2185",
    int((comb.recalled == 1).sum()) == 2423 and int((comb.recalled == 0).sum()) == 2185,
    f"{int((comb.recalled==1).sum())}/{int((comb.recalled==0).sum())}")
 
-# --- 4. recall re-derivation ----------------------------------------
+# 4. recall re-derivation
 log("\n## 4. RECALL LABELS (re-derived from events per session)")
 for sub, ses in SESSIONS:
     ev_path = os.path.join(HERE, "data/ds004395", f"sub-{sub}", f"ses-{ses}", "eeg",
@@ -173,7 +172,7 @@ for sub, ses in SESSIONS:
     ck("recall", f"{sub}/{ses} no recognition events used", len(recog) == 0,
        f"{len(recog)} RECOG_* present, unused")
 
-# --- 5. EEG re-extraction -------------------------------------------
+# 5. EEG re-extraction
 log("\n## 5. EEG EXTRACTION (re-extract from EDF per session)")
 import mne
 sample_rows = [0, 200, 575]
@@ -221,7 +220,7 @@ for sub, ses in SESSIONS:
        not np.isnan(X).any() and not np.isinf(X).any() and not (X == 0).all(axis=1).any(),
        "clean")
 
-# --- 6. ridge / decoding config -------------------------------------
+# 6. ridge / decoding config
 log("\n## 6. RIDGE / DECODING CONFIG")
 for sub, ses in SESSIONS:
     mj = os.path.join(sess_dir(sub, ses), "ridge_corrected_metadata.json")
@@ -237,13 +236,13 @@ for sub, ses in SESSIONS:
 # source-code invariants (textual)
 src = open(os.path.join(HERE, "code/step08_run_ridge_cv.py")).read()
 ck("ridge", "scaler fit on train fold only (source)",
-   "StandardScaler().fit(X[tr])" in src, "StandardScaler().fit(X[tr])",
+   "StandardScaler().fit(X[train_idx])" in src, "StandardScaler().fit(X[train_idx])",
    "code/step08_run_ridge_cv.py")
 ck("ridge", "ridge fit on train only (source)",
-   "model.fit(scaler.transform(X[tr]), Ymat[tr])" in src, "fit on X[tr],Ymat[tr]",
+   "model.fit(scaler.transform(X[train_idx]), Ymat[train_idx])" in src, "fit on X[train_idx],Ymat[train_idx]",
    "code/step08_run_ridge_cv.py")
 ck("ridge", "predict transforms test with train scaler (source)",
-   "model.predict(scaler.transform(X[te]))" in src, "predict(scaler.transform(X[te]))",
+   "model.predict(scaler.transform(X[test_idx]))" in src, "predict(scaler.transform(X[test_idx]))",
    "code/step08_run_ridge_cv.py")
 ck("ridge", "alpha=10000 & solver svd (source)",
    "Ridge(alpha=ALPHA, solver=\"svd\")" in src and "ALPHA = 10000.0" in src, "Ridge svd alpha 1e4",
@@ -256,10 +255,10 @@ ck("ridge", "embedding_fidelity == raw_cosine (combined table)",
    bool(np.allclose(comb.embedding_fidelity, comb.raw_cosine)), "allclose True",
    "outputs/all_sessions_fidelity_results.csv")
 ck("ridge", "raw_cosine defined as cos(pred,true) (source)",
-   "corr = sims[np.arange(len(te)), ci]" in src and "cosine_matrix" in src,
+   "correct_sim = sims[np.arange(len(test_idx)), correct_col]" in src and "cosine_matrix" in src,
    "cosine to correct candidate", "code/step08_run_ridge_cv.py")
 
-# --- 7. corrected metric ranges -------------------------------------
+# 7. corrected metric ranges
 log("\n## 7. CORRECTED METRIC SANITY")
 for c in ["centered_cosine", "true_word_percentile", "centered_true_word_percentile"]:
     ck("corrected", f"column present: {c}", c in comb.columns, "present")
@@ -275,13 +274,12 @@ ck("corrected", "centered_true_word_percentile near chance 0.5",
 ck("corrected", "raw_cosine high (~0.85, inflated)",
    0.80 < comb.raw_cosine.mean() < 0.90, f"mean {comb.raw_cosine.mean():.4f}")
 
-# --- 8. final model numbers -----------------------------------------
+# 8. final model numbers
 log("\n## 8. FINAL MODEL NUMBERS (vs source CSV/summary)")
 fmr = pd.read_csv(os.path.join(HERE, "outputs/final_memory_model_results.csv"))
 main = fmr[(fmr.metric == "raw_cosine") & (fmr.model.str.contains("GLMM"))].iloc[0]
 def close(a, b, t=5e-4):
     return abs(float(a) - b) < t
-ck("final", "main metric is raw_cosine (== embedding_fidelity)", True, "raw_cosine")
 ck("final", "coefficient = -0.0291", close(main.coef_per_sd, -0.0291), f"{main.coef_per_sd:.4f}")
 ck("final", "odds ratio = 0.971", close(main.odds_ratio, 0.971, 1e-3), f"{main.odds_ratio:.4f}")
 ck("final", "CI = [0.913, 1.033]",
@@ -314,7 +312,7 @@ ck("final", "supplementary metrics labeled SUPPLEMENTARY",
    'SUPP_METRICS = ["centered_cosine", "true_word_percentile", "centered_true_word_percentile"]' in fsrc,
    "supplementary list", "code/step11_run_memory_model.py")
 
-# --- 11. gitignore --------------------------------------------------
+# 11. gitignore
 # Verified by behaviour (git check-ignore) rather than by grepping .gitignore
 # text, so a broader rule that subsumes a narrower one still passes.
 log("\n## 11. GITIGNORE")
@@ -344,7 +342,6 @@ for pat in ["code/step04_extract_t5_embeddings.py",
     ck("gitignore", f"tracks {pat}", not is_ignored(pat),
        "tracked" if not is_ignored(pat) else "WRONGLY IGNORED", ".gitignore")
 
-# =====================================================================
 n_fail = sum(1 for c in checks if c[2] == "FAIL")
 log("\n" + "=" * 80)
 log(f"PROGRAMMATIC AUDIT: {len(checks)} checks, {n_fail} FAIL")
@@ -358,3 +355,5 @@ with open(OUT, "w") as f:
     f.write("\n".join(lines) + "\n")
 print(f"\nwrote {OUT}")
 print("wrote outputs/final_precision_audit_checks.csv")
+
+sys.exit(1 if n_fail else 0)

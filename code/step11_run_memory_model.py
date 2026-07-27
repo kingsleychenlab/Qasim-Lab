@@ -250,7 +250,7 @@ def main():
         meta_out[metric] = {"role": role, "remembered_mean": rem, "forgotten_mean": forg,
                             "glmm": glmm, "fallback": fb}
 
-    # ---- FINAL CONCLUSION (main model = raw_cosine GLMM) ----
+    # FINAL CONCLUSION (main model = raw_cosine GLMM)
     main = meta_out[MAIN_METRIC]["glmm"]
     rem = meta_out[MAIN_METRIC]["remembered_mean"]
     forg = meta_out[MAIN_METRIC]["forgotten_mean"]
@@ -261,6 +261,7 @@ def main():
         "no different": "Remembered and forgotten words showed no difference in EEG-to-AI "
                         "embedding fidelity (no significant effect).",
     }
+    conclusion = concl_map.get(direction, "Model fit was inconclusive (both fits failed).")
     log("\n" + "=" * 80)
     log("FINAL OUTLINE MODEL — CONCLUSION")
     log("=" * 80)
@@ -272,7 +273,7 @@ def main():
             f"approx p={main['p_approx']:.4f}")
     log(f"remembered mean = {rem:.5f}   forgotten mean = {forg:.5f}   "
         f"diff = {rem-forg:+.5f}")
-    log(f"\n12. CONCLUSION: {concl_map[direction]}")
+    log(f"\n12. CONCLUSION: {conclusion}")
     # Match the caveat to the run being analyzed. People read this straight out of
     # the summary file, so a hardcoded sample size here would contradict the header
     # above it.
@@ -294,7 +295,7 @@ def main():
         "n_subjects": n_sub, "n_sessions": n_ses, "n_trials": n_trials,
         "n_recalled": n_rec, "n_forgotten": n_forg,
         "decoding_was_at_chance": True,
-        "final_conclusion": concl_map[direction],
+        "final_conclusion": conclusion,
         "results": meta_out,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
     }, open(args.out_meta, "w"), indent=2, default=str)

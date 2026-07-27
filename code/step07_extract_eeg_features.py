@@ -36,21 +36,21 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--trials", default=os.path.join(HERE, "outputs/encoding_trials.csv"))
-    ap.add_argument("--out-x", default=os.path.join(HERE, "outputs/X_eeg.npy"))
-    ap.add_argument("--out-meta-csv", default=os.path.join(HERE, "outputs/trial_metadata.csv"))
-    ap.add_argument("--out-meta-json", default=os.path.join(HERE, "outputs/eeg_feature_metadata.json"))
-    ap.add_argument("--win-start", type=float, default=0.300)
-    ap.add_argument("--win-stop", type=float, default=0.800)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--trials", default=os.path.join(HERE, "outputs/encoding_trials.csv"))
+    parser.add_argument("--out-x", default=os.path.join(HERE, "outputs/X_eeg.npy"))
+    parser.add_argument("--out-meta-csv", default=os.path.join(HERE, "outputs/trial_metadata.csv"))
+    parser.add_argument("--out-meta-json", default=os.path.join(HERE, "outputs/eeg_feature_metadata.json"))
+    parser.add_argument("--win-start", type=float, default=0.300)
+    parser.add_argument("--win-stop", type=float, default=0.800)
     # Preprocessing is off by default (the first pass keeps raw 500 Hz data).
-    ap.add_argument("--filter", nargs=2, type=float, metavar=("LFREQ", "HFREQ"),
+    parser.add_argument("--filter", nargs=2, type=float, metavar=("LFREQ", "HFREQ"),
                     default=None, help="Optional band-pass (l_freq h_freq). Default: none.")
-    ap.add_argument("--baseline", nargs=2, type=float, metavar=("BSTART", "BSTOP"),
+    parser.add_argument("--baseline", nargs=2, type=float, metavar=("BSTART", "BSTOP"),
                     default=None, help="Optional baseline window (s rel. to onset). Default: none.")
-    ap.add_argument("--resample", type=float, default=None,
+    parser.add_argument("--resample", type=float, default=None,
                     help="Optional resample rate (Hz). Default: none (keep 500 Hz).")
-    args = ap.parse_args()
+    args = parser.parse_args()
 
     import mne
 
@@ -65,9 +65,7 @@ def main():
     if not os.path.isfile(eeg_path):
         sys.exit(f"ERROR: EEG file not found: {eeg_path}")
 
-    # -----------------------------------------------------------------
-    # Load EDF (preload into memory so slicing is exact & fast)
-    # -----------------------------------------------------------------
+    # Preload into memory so slicing is exact and fast.
     print(f"loading EDF: {eeg_path}")
     raw = mne.io.read_raw_edf(eeg_path, preload=True, verbose="ERROR")
     sfreq = float(raw.info["sfreq"])
@@ -77,10 +75,10 @@ def main():
     # Optional preprocessing (all off unless a flag is passed)
     applied = {"filter": None, "baseline": None, "resample": None}
     if args.filter is not None:
-        l, h = args.filter
-        print(f"applying band-pass {l}-{h} Hz")
-        raw.filter(l_freq=l, h_freq=h, verbose="ERROR")
-        applied["filter"] = [l, h]
+        low_freq, high_freq = args.filter
+        print(f"applying band-pass {low_freq}-{high_freq} Hz")
+        raw.filter(l_freq=low_freq, h_freq=high_freq, verbose="ERROR")
+        applied["filter"] = [low_freq, high_freq]
     if args.resample is not None:
         print(f"resampling to {args.resample} Hz (adjusts sample indices!)")
         # Resampling changes the sample grid; recompute sample indices accordingly.
@@ -108,19 +106,17 @@ def main():
           f"(stop EXCLUSIVE) -> {n_timepoints} timepoints")
     print(f"feature dim = {n_channels} ch x {n_timepoints} tp = {n_features}")
 
-    # -----------------------------------------------------------------
-    # Extract per-trial (sample-based, integer indexing, no float onsets)
-    # -----------------------------------------------------------------
+    # Extract per trial with integer sample indexing (no float onsets).
     X = np.zeros((len(trials), n_features), dtype=np.float32)
     meta_rows = []
     dropped = []
     for i, row in trials.reset_index(drop=True).iterrows():
-        s = int(row["sample"])
-        start = s + win_start_off
-        stop = s + win_stop_off
+        sample = int(row["sample"])
+        start = sample + win_start_off
+        stop = sample + win_stop_off
         reason = ""
-        if s < 0:
-            reason = f"sentinel sample {s} < 0"
+        if sample < 0:
+            reason = f"sentinel sample {sample} < 0"
         elif start < 0:
             reason = f"start_sample {start} < 0"
         elif stop > n_times_total:
@@ -137,25 +133,22 @@ def main():
                 # C-order flatten: channel-major (ch0 all tp, then ch1, ...)
                 X[i] = seg.reshape(-1).astype(np.float32)
 
-        m = row.to_dict()
-        m.update({"start_sample": start, "stop_sample": stop,
+        meta_row = row.to_dict()
+        meta_row.update({"start_sample": start, "stop_sample": stop,
                   "n_timepoints": n_timepoints,
                   "extracted": reason == "", "drop_reason": reason})
-        meta_rows.append(m)
+        meta_rows.append(meta_row)
 
     meta_df = pd.DataFrame(meta_rows)
 
-    # -----------------------------------------------------------------
-    # Report
-    # -----------------------------------------------------------------
     print("\n=== EXTRACTION SUMMARY ===")
     print(f"trials total   : {len(trials)}")
     print(f"trials extracted: {int(meta_df.extracted.sum())}")
     print(f"trials dropped : {len(dropped)}")
     if dropped:
         print("DROPPED (index, word, reason):")
-        for d in dropped:
-            print(f"   {d[0]}  {d[1]!r}  {d[2]}")
+        for dropped_trial in dropped:
+            print(f"   {dropped_trial[0]}  {dropped_trial[1]!r}  {dropped_trial[2]}")
     else:
         print("no trials dropped.")
     print(f"X_eeg shape    : {X.shape}")
@@ -165,9 +158,6 @@ def main():
     has_inf = bool(np.isinf(X).any())
     print(f"NaN: {has_nan}   Inf: {has_inf}")
 
-    # -----------------------------------------------------------------
-    # Save
-    # -----------------------------------------------------------------
     np.save(args.out_x, X)
     meta_df.to_csv(args.out_meta_csv, index=False)
 
@@ -196,7 +186,7 @@ def main():
         "n_trials_total": int(len(trials)),
         "n_trials_extracted": int(meta_df.extracted.sum()),
         "n_trials_dropped": len(dropped),
-        "dropped": [{"index": int(d[0]), "word": d[1], "reason": d[2]} for d in dropped],
+        "dropped": [{"index": int(dropped_trial[0]), "word": dropped_trial[1], "reason": dropped_trial[2]} for dropped_trial in dropped],
         "no_nan": not has_nan,
         "no_inf": not has_inf,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),

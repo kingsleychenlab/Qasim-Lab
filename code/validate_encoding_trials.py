@@ -83,10 +83,10 @@ def main():
 
     # 6. all eeg_file paths exist
     missing_paths = []
-    for p in df.eeg_file.unique():
-        full = p if os.path.isabs(p) else os.path.join(HERE, p)
-        if not os.path.isfile(full):
-            missing_paths.append(p)
+    for eeg_file in df.eeg_file.unique():
+        full_path = eeg_file if os.path.isabs(eeg_file) else os.path.join(HERE, eeg_file)
+        if not os.path.isfile(full_path):
+            missing_paths.append(eeg_file)
     check("all eeg_file paths exist on disk", not missing_paths,
           f"missing: {missing_paths}")
 

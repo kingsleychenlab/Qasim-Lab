@@ -44,23 +44,23 @@ RECOG_COLS = ["recog_resp", "recog_conf", "recog_rt", "recog_acc"]
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--trials", default=os.path.join(HERE, "outputs/encoding_trials.csv"))
-    ap.add_argument("--out", default=os.path.join(HERE, "outputs/recall_label_audit.txt"))
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--trials", default=os.path.join(HERE, "outputs/encoding_trials.csv"))
+    parser.add_argument("--out", default=os.path.join(HERE, "outputs/recall_label_audit.txt"))
+    args = parser.parse_args()
 
     trials = pd.read_csv(args.trials)
 
     # Resolve the canonical events.tsv from the encoding_trials event_file column.
-    ev_files = trials.event_file.unique()
-    if len(ev_files) != 1:
-        sys.exit(f"ERROR: expected one event_file, found {len(ev_files)}: {ev_files}")
-    ev_rel = ev_files[0]
-    ev_path = ev_rel if os.path.isabs(ev_rel) else os.path.join(HERE, ev_rel)
-    if not os.path.isfile(ev_path):
-        sys.exit(f"ERROR: events.tsv not found: {ev_path}")
+    event_files = trials.event_file.unique()
+    if len(event_files) != 1:
+        sys.exit(f"ERROR: expected one event_file, found {len(event_files)}: {event_files}")
+    event_file_rel = event_files[0]
+    event_file_path = event_file_rel if os.path.isabs(event_file_rel) else os.path.join(HERE, event_file_rel)
+    if not os.path.isfile(event_file_path):
+        sys.exit(f"ERROR: events.tsv not found: {event_file_path}")
 
-    ev = pd.read_csv(ev_path, sep="\t", na_values=["n/a", ""])
+    events = pd.read_csv(event_file_path, sep="\t", na_values=["n/a", ""])
 
     with open(args.out, "w") as fh:
         log = Tee(fh)
@@ -68,90 +68,84 @@ def main():
         log("RECALL-LABEL AUDIT — sub-LTP269 / ses-20 / task-ltpFR2")
         log("=" * 74)
         log(f"encoding_trials : {args.trials}  ({len(trials)} rows)")
-        log(f"events.tsv      : {ev_rel}")
-        log(f"events columns  : {list(ev.columns)}")
+        log(f"events.tsv      : {event_file_rel}")
+        log(f"events columns  : {list(events.columns)}")
 
-        # ---- confirm we are not using recognition information -----------
-        recog_events = ev[ev.trial_type.astype(str).str.upper().str.startswith("RECOG")]
-        recog_cols_present = [c for c in RECOG_COLS if c in ev.columns]
+        # Confirm recognition information is not used.
+        recog_events = events[events.trial_type.astype(str).str.upper().str.startswith("RECOG")]
+        recog_cols_present = [c for c in RECOG_COLS if c in events.columns]
         log(f"\nRECOG_* events present in file : {len(recog_events)} "
             "(NOT used in recall derivation)")
         log(f"recognition columns present    : {recog_cols_present or 'none'} "
             "(NOT used in recall derivation)")
 
-        # ---- split to the only two event types we use -------------------
-        word_ev = ev[ev.trial_type == "WORD"].copy()
-        rec_ev = ev[ev.trial_type == "REC_WORD"].copy()
-        log(f"\nWORD events     : {len(word_ev)}")
-        log(f"REC_WORD events : {len(rec_ev)}")
+        # Keep only the two event types the recall rule uses.
+        word_events = events[events.trial_type == "WORD"].copy()
+        recall_events = events[events.trial_type == "REC_WORD"].copy()
+        log(f"\nWORD events     : {len(word_events)}")
+        log(f"REC_WORD events : {len(recall_events)}")
 
-        # ---- build the within-trial recall key set ----------------------
         # Valid recall keys = (trial, item_num) from REC_WORD, dropping
         # intrusions/vocalizations (item_num == -1) and missing values.
-        rec_valid = rec_ev.dropna(subset=["trial", "item_num"])
-        rec_valid = rec_valid[rec_valid.item_num != -1]
-        recall_keys = set(zip(rec_valid.trial.astype(int),
-                              rec_valid.item_num.astype(int)))
+        valid_recalls = recall_events.dropna(subset=["trial", "item_num"])
+        valid_recalls = valid_recalls[valid_recalls.item_num != -1]
+        recall_keys = set(zip(valid_recalls.trial.astype(int),
+                              valid_recalls.item_num.astype(int)))
         # For a cross-trial contrast (to show within-trial matters), also build
         # the set of item_nums recalled anywhere in the session.
-        recalled_any_item = set(rec_valid.item_num.astype(int))
+        recalled_any_item = set(valid_recalls.item_num.astype(int))
 
-        # ---- recompute recalled per encoding_trials row (exact order) ---
-        recomputed = []
-        cross_only = 0  # would be 1 under cross-trial matching but 0 within-trial
-        for _, r in trials.iterrows():
-            t, inum = int(r.trial), int(r.item_num)
-            within = (t, inum) in recall_keys
-            recomputed.append(1 if within else 0)
-            if (not within) and (inum in recalled_any_item):
-                cross_only += 1
-        trials = trials.assign(recalled_recomputed=recomputed)
+        # Recompute recalled per encoding_trials row, preserving row order.
+        recomputed_labels = []
+        cross_trial_only = 0  # would be 1 under cross-trial matching but 0 within-trial
+        for _, trial_row in trials.iterrows():
+            trial_num, item_number = int(trial_row.trial), int(trial_row.item_num)
+            matched_within_trial = (trial_num, item_number) in recall_keys
+            recomputed_labels.append(1 if matched_within_trial else 0)
+            if (not matched_within_trial) and (item_number in recalled_any_item):
+                cross_trial_only += 1
+        trials = trials.assign(recalled_recomputed=recomputed_labels)
 
-        # =================================================================
-        # Detailed per-trial audits for trials 1, 12, 24
-        # =================================================================
-        for t in AUDIT_TRIALS:
+        # Detailed per-trial audits for trials 1, 12, 24.
+        for trial_num in AUDIT_TRIALS:
             log("\n" + "-" * 74)
-            log(f"TRIAL {t} — detailed audit")
+            log(f"TRIAL {trial_num} — detailed audit")
             log("-" * 74)
-            tw = trials[trials.trial == t].sort_values("serialpos")
-            tr = rec_ev[rec_ev.trial == t]
+            trial_words = trials[trials.trial == trial_num].sort_values("serialpos")
+            trial_recalls = recall_events[recall_events.trial == trial_num]
 
-            log(f"WORD (studied) events in trial {t}: {len(tw)}")
+            log(f"WORD (studied) events in trial {trial_num}: {len(trial_words)}")
             log(f"  {'sp':>3} {'item_name':<12} {'item_num':>8} {'onset':>10} {'sample':>9}")
-            for _, w in tw.iterrows():
-                log(f"  {int(w.serialpos):>3} {str(w.word):<12} {int(w.item_num):>8} "
-                    f"{w.onset:>10.3f} {int(w['sample']):>9}")
+            for _, word_row in trial_words.iterrows():
+                log(f"  {int(word_row.serialpos):>3} {str(word_row.word):<12} {int(word_row.item_num):>8} "
+                    f"{word_row.onset:>10.3f} {int(word_row['sample']):>9}")
 
-            log(f"\nREC_WORD (freely recalled) events in trial {t}: {len(tr)}")
+            log(f"\nREC_WORD (freely recalled) events in trial {trial_num}: {len(trial_recalls)}")
             log(f"  {'item_name':<12} {'item_num':>8} {'onset':>10}")
-            for _, r in tr.iterrows():
-                onset = f"{r.onset:.3f}" if pd.notna(r.onset) else "n/a"
-                tag = "  (intrusion/vocalization)" if r.item_num == -1 else ""
-                log(f"  {str(r.item_name):<12} {int(r.item_num):>8} {onset:>10}{tag}")
+            for _, recall_row in trial_recalls.iterrows():
+                onset = f"{recall_row.onset:.3f}" if pd.notna(recall_row.onset) else "n/a"
+                tag = "  (intrusion/vocalization)" if recall_row.item_num == -1 else ""
+                log(f"  {str(recall_row.item_name):<12} {int(recall_row.item_num):>8} {onset:>10}{tag}")
 
-            rec_items_this_trial = set(
-                rec_ev[(rec_ev.trial == t) & (rec_ev.item_num != -1)]
+            recalled_items_this_trial = set(
+                recall_events[(recall_events.trial == trial_num) & (recall_events.item_num != -1)]
                 .item_num.astype(int))
             log(f"\nper-WORD label check (recalled iff item_num in "
-                f"trial-{t} REC_WORD set):")
+                f"trial-{trial_num} REC_WORD set):")
             log(f"  {'sp':>3} {'item_name':<12} {'item_num':>8} "
                 f"{'derived':>7} {'csv':>4} {'result':>6}")
-            tpass = tfail = 0
-            for _, w in tw.iterrows():
-                inum = int(w.item_num)
-                derived = 1 if inum in rec_items_this_trial else 0
-                csv_lbl = int(w.recalled)
-                ok = derived == csv_lbl
-                tpass += ok
-                tfail += (not ok)
-                log(f"  {int(w.serialpos):>3} {str(w.word):<12} {inum:>8} "
-                    f"{derived:>7} {csv_lbl:>4} {'PASS' if ok else 'FAIL':>6}")
-            log(f"trial {t}: {tpass}/{len(tw)} PASS, {tfail} FAIL")
+            n_pass = n_fail = 0
+            for _, word_row in trial_words.iterrows():
+                item_number = int(word_row.item_num)
+                derived = 1 if item_number in recalled_items_this_trial else 0
+                csv_label = int(word_row.recalled)
+                labels_agree = derived == csv_label
+                n_pass += labels_agree
+                n_fail += (not labels_agree)
+                log(f"  {int(word_row.serialpos):>3} {str(word_row.word):<12} {item_number:>8} "
+                    f"{derived:>7} {csv_label:>4} {'PASS' if labels_agree else 'FAIL':>6}")
+            log(f"trial {trial_num}: {n_pass}/{len(trial_words)} PASS, {n_fail} FAIL")
 
-        # =================================================================
-        # Full validation across all 576 rows
-        # =================================================================
         log("\n" + "=" * 74)
         log("FULL VALIDATION (all 576 rows)")
         log("=" * 74)
@@ -165,18 +159,17 @@ def main():
         log(f"labels matching : {n_match}/{len(trials)}")
         log(f"labels mismatch : {n_mismatch}")
         if n_mismatch:
-            bad = trials[trials.recalled_recomputed != trials.recalled]
+            mismatches = trials[trials.recalled_recomputed != trials.recalled]
             log("MISMATCHES:")
-            for _, b in bad.iterrows():
-                log(f"   trial {int(b.trial)} sp {int(b.serialpos)} {b.word} "
-                    f"item_num {int(b.item_num)}: csv={int(b.recalled)} "
-                    f"recomputed={int(b.recalled_recomputed)}")
+            for _, mismatch_row in mismatches.iterrows():
+                log(f"   trial {int(mismatch_row.trial)} sp {int(mismatch_row.serialpos)} {mismatch_row.word} "
+                    f"item_num {int(mismatch_row.item_num)}: csv={int(mismatch_row.recalled)} "
+                    f"recomputed={int(mismatch_row.recalled_recomputed)}")
 
-        log(f"\nwithin-trial matching enforced: {cross_only} additional word(s) "
+        log(f"\nwithin-trial matching enforced: {cross_trial_only} additional word(s) "
             "would flip to recalled=1 under (incorrect) cross-trial matching; "
             "these were NOT matched.")
 
-        # ---- assertions --------------------------------------------------
         log("\n--- assertions ---")
         log.check("576 rows in encoding_trials.csv", len(trials) == N_TRIALS, f"{len(trials)}")
         log.check("576/576 recalled labels match", n_match == N_TRIALS,
@@ -188,7 +181,7 @@ def main():
         log.check("no RECOG_* events were used (only WORD + REC_WORD)",
                   True, f"{len(recog_events)} RECOG_* events ignored")
         log.check("matching restricted within trial/list (no cross-trial matches)",
-                  True, f"{cross_only} cross-trial-only candidates excluded")
+                  True, f"{cross_trial_only} cross-trial-only candidates excluded")
 
         log("")
         if log.fail == 0 and n_match == N_TRIALS:

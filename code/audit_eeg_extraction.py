@@ -44,18 +44,18 @@ WIN_STOP = 0.800
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--x", default=os.path.join(HERE, "outputs/X_eeg.npy"))
-    ap.add_argument("--meta", default=os.path.join(HERE, "outputs/trial_metadata.csv"))
-    ap.add_argument("--trials", default=os.path.join(HERE, "outputs/encoding_trials.csv"))
-    ap.add_argument("--out", default=os.path.join(HERE, "outputs/eeg_extraction_audit.txt"))
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--x", default=os.path.join(HERE, "outputs/X_eeg.npy"))
+    parser.add_argument("--meta", default=os.path.join(HERE, "outputs/trial_metadata.csv"))
+    parser.add_argument("--trials", default=os.path.join(HERE, "outputs/encoding_trials.csv"))
+    parser.add_argument("--out", default=os.path.join(HERE, "outputs/eeg_extraction_audit.txt"))
+    args = parser.parse_args()
 
     import mne
 
-    for p in (args.x, args.meta, args.trials):
-        if not os.path.isfile(p):
-            sys.exit(f"ERROR: required input not found: {p}")
+    for path in (args.x, args.meta, args.trials):
+        if not os.path.isfile(path):
+            sys.exit(f"ERROR: required input not found: {path}")
 
     X = np.load(args.x)
     meta = pd.read_csv(args.meta)
@@ -65,10 +65,10 @@ def main():
     eeg_files = trials.eeg_file.unique()
     if len(eeg_files) != 1:
         sys.exit(f"ERROR: expected one eeg_file, found {len(eeg_files)}: {eeg_files}")
-    eeg_rel = eeg_files[0]
-    eeg_path = eeg_rel if os.path.isabs(eeg_rel) else os.path.join(HERE, eeg_rel)
-    if not os.path.isfile(eeg_path):
-        sys.exit(f"ERROR: EDF not found: {eeg_path}")
+    eeg_file_rel = eeg_files[0]
+    eeg_file_path = eeg_file_rel if os.path.isabs(eeg_file_rel) else os.path.join(HERE, eeg_file_rel)
+    if not os.path.isfile(eeg_file_path):
+        sys.exit(f"ERROR: EDF not found: {eeg_file_path}")
 
     with open(args.out, "w") as fh:
         log = Tee(fh)
@@ -77,64 +77,59 @@ def main():
         log("=" * 74)
         log(f"X_eeg          : {args.x}  shape={X.shape} dtype={X.dtype}")
         log(f"trial_metadata : {args.meta}  rows={len(meta)}")
-        log(f"EDF            : {eeg_rel}")
+        log(f"EDF            : {eeg_file_rel}")
 
         log("\nloading EDF with MNE ...")
-        raw = mne.io.read_raw_edf(eeg_path, preload=True, verbose="ERROR")
+        raw = mne.io.read_raw_edf(eeg_file_path, preload=True, verbose="ERROR")
         sfreq = float(raw.info["sfreq"])
         n_times_total = int(raw.n_times)
         eeg_picks = mne.pick_types(raw.info, eeg=True, eog=False, stim=False, misc=False)
         n_channels = len(eeg_picks)
         data = raw.get_data(picks=eeg_picks)  # (129, n_times) float64
-        start_off = int(WIN_START * sfreq)
-        stop_off = int(WIN_STOP * sfreq)
+        start_offset = int(WIN_START * sfreq)
+        stop_offset = int(WIN_STOP * sfreq)
         log(f"sfreq={sfreq}  n_times={n_times_total}  EEG channels picked={n_channels}")
-        log(f"window offsets: +{start_off} .. +{stop_off} (exclusive) "
-            f"-> {stop_off - start_off} timepoints")
+        log(f"window offsets: +{start_offset} .. +{stop_offset} (exclusive) "
+            f"-> {stop_offset - start_offset} timepoints")
 
         log.check("picked 129 EEG channels", n_channels == N_CH, f"got {n_channels}")
 
-        # =================================================================
-        # Spot-check specific rows against freshly-extracted slices
-        # =================================================================
+        # Spot-check specific rows against freshly-extracted slices.
         log("\n" + "-" * 74)
         log("PER-ROW SLICE COMPARISON (rows 0, 100, 300, 575)")
         log("-" * 74)
         worst = 0.0
-        for r in AUDIT_ROWS:
-            row = meta.iloc[r]
-            s = int(row["sample"])
-            start = s + start_off
-            stop = s + stop_off
-            seg = data[:, start:stop]  # (129, 250) float64
-            shape_ok = seg.shape == (N_CH, N_TP)
-            flat = seg.reshape(-1)  # C-order, channel-major
+        for row_idx in AUDIT_ROWS:
+            meta_row = meta.iloc[row_idx]
+            sample = int(meta_row["sample"])
+            start_sample = sample + start_offset
+            stop_sample = sample + stop_offset
+            segment = data[:, start_sample:stop_sample]  # (129, 250) float64
+            shape_matches = segment.shape == (N_CH, N_TP)
+            flat_segment = segment.reshape(-1)  # C-order, channel-major
 
-            stored = X[r].astype(np.float64)
+            stored_row = X[row_idx].astype(np.float64)
             # Raw (stored float32 vs recomputed float64) and exact-after-cast diff.
-            max_abs = float(np.max(np.abs(flat - stored)))
-            mean_abs = float(np.mean(np.abs(flat - stored)))
-            exact_after_cast = bool(np.array_equal(seg.reshape(-1).astype(np.float32),
-                                                   X[r]))
+            max_abs = float(np.max(np.abs(flat_segment - stored_row)))
+            mean_abs = float(np.mean(np.abs(flat_segment - stored_row)))
+            exact_after_cast = bool(np.array_equal(segment.reshape(-1).astype(np.float32),
+                                                   X[row_idx]))
             worst = max(worst, max_abs)
 
-            log(f"\nrow {r:>3}: word={row.get('word')!r} trial={int(row['trial'])} "
-                f"serialpos={int(row['serialpos'])} sample={s}")
-            log(f"   start_sample={start}  stop_sample={stop}  "
-                f"reextracted shape={seg.shape}")
-            log(f"   max|reextracted - X_eeg[{r}]| = {max_abs:.3e}")
-            log(f"   mean|reextracted - X_eeg[{r}]| = {mean_abs:.3e}")
+            log(f"\nrow {row_idx:>3}: word={meta_row.get('word')!r} trial={int(meta_row['trial'])} "
+                f"serialpos={int(meta_row['serialpos'])} sample={sample}")
+            log(f"   start_sample={start_sample}  stop_sample={stop_sample}  "
+                f"reextracted shape={segment.shape}")
+            log(f"   max|reextracted - X_eeg[{row_idx}]| = {max_abs:.3e}")
+            log(f"   mean|reextracted - X_eeg[{row_idx}]| = {mean_abs:.3e}")
             log(f"   exact match after float32 cast: {exact_after_cast}")
-            log.check(f"row {r}: reextracted shape is 129x250", shape_ok, f"{seg.shape}")
-            log.check(f"row {r}: matches X_eeg (float32-exact)", exact_after_cast,
+            log.check(f"row {row_idx}: reextracted shape is 129x250", shape_matches, f"{segment.shape}")
+            log.check(f"row {row_idx}: matches X_eeg (float32-exact)", exact_after_cast,
                       f"max abs diff {max_abs:.3e}")
 
         log(f"\nworst max-abs diff across audited rows (float64 vs stored float32): "
             f"{worst:.3e}")
 
-        # =================================================================
-        # Full-matrix validation
-        # =================================================================
         log("\n" + "=" * 74)
         log("FULL VALIDATION (all 576 rows)")
         log("=" * 74)
@@ -144,21 +139,27 @@ def main():
             log.check("every row has n_timepoints = 250",
                       bool((meta.n_timepoints == N_TP).all()),
                       f"unique={sorted(meta.n_timepoints.unique().tolist())}")
+        else:
+            log.warn("n_timepoints column absent", "cannot verify per-row timepoints")
         if "extracted" in meta.columns:
             log.check("every row has extracted = True",
                       bool(meta.extracted.astype(bool).all()),
                       f"{int(meta.extracted.astype(bool).sum())}/{len(meta)}")
+        else:
+            log.warn("extracted column absent", "cannot verify all rows extracted")
         if "drop_reason" in meta.columns:
-            dr = meta.drop_reason.fillna("").astype(str).str.strip()
-            n_dropped = int((dr != "").sum())
+            drop_reasons = meta.drop_reason.fillna("").astype(str).str.strip()
+            n_dropped = int((drop_reasons != "").sum())
             log.check("drop_reason empty/none for all rows", n_dropped == 0,
                       f"{n_dropped} rows with a drop_reason")
+        else:
+            log.warn("drop_reason column absent", "cannot verify no drops")
 
         log.check("no NaN values", not np.isnan(X).any())
         log.check("no infinite values", not np.isinf(X).any())
-        row_all_zero = (X == 0).all(axis=1)
-        log.check("no all-zero rows", not row_all_zero.any(),
-                  f"{int(row_all_zero.sum())} all-zero rows")
+        all_zero_rows = (X == 0).all(axis=1)
+        log.check("no all-zero rows", not all_zero_rows.any(),
+                  f"{int(all_zero_rows.sum())} all-zero rows")
 
         n_dropped_total = 0
         if "extracted" in meta.columns:

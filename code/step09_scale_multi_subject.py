@@ -63,39 +63,39 @@ COMBINED_COLS = [
 
 
 def run(cmd, log):
-    log("    $ " + " ".join(os.path.basename(c) if c.endswith(".py") else c for c in cmd))
-    r = subprocess.run(cmd, capture_output=True, text=True)
-    if r.returncode != 0:
-        log(f"    !! exit {r.returncode}")
-        tail = (r.stdout + r.stderr).strip().splitlines()[-8:]
-        for ln in tail:
-            log("       " + ln)
-    return r.returncode
+    log("    $ " + " ".join(os.path.basename(part) if part.endswith(".py") else part for part in cmd))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        log(f"    !! exit {result.returncode}")
+        tail = (result.stdout + result.stderr).strip().splitlines()[-8:]
+        for line in tail:
+            log("       " + line)
+    return result.returncode
 
 
 def select_sessions(task, peers, n_subjects, win_start, win_stop, log):
     """Screen candidates smallest-EDF-first; take the first valid session per
     distinct subject until n_subjects are chosen."""
     log(f"scanning OpenNeuro S3 for task-{task} sessions (metadata only) ...")
-    sess, pages = F.scan_task_sessions(task)
-    with_edf = sorted([(k, v) for k, v in sess.items() if "edf" in v],
+    sessions, pages = F.scan_task_sessions(task)
+    with_edf = sorted([(key, info) for key, info in sessions.items() if "edf" in info],
                       key=lambda x: x[1]["edf"])
-    log(f"scanned {pages} pages; {len(sess)} sessions with EDFs. "
+    log(f"scanned {pages} pages; {len(sessions)} sessions with EDFs. "
         f"Screening for {n_subjects} distinct valid subjects ...")
     chosen, seen_subjects = [], set()
-    for (sub, ses), v in with_edf:
+    for (sub, ses), info in with_edf:
         if sub in seen_subjects:
             continue
-        c = F.peek_session(sub, ses, task, peers, v["edf"], win_start, win_stop)
-        if not c:
+        candidate = F.peek_session(sub, ses, task, peers, info["edf"], win_start, win_stop)
+        if not candidate:
             continue
-        ok = (c["n_word"] == 576 and c["coverage"] >= 0.999
-              and c["n_valid_win"] == 576)
-        if ok:
-            chosen.append((sub, ses, v["edf"], c))
+        is_valid = (candidate["n_word"] == 576 and candidate["coverage"] >= 0.999
+              and candidate["n_valid_win"] == 576)
+        if is_valid:
+            chosen.append((sub, ses, info["edf"], candidate))
             seen_subjects.add(sub)
-            log(f"  + {sub}/{ses}  EDF {v['edf']/1e6:.0f}MB  "
-                f"valid_win {c['n_valid_win']}/576")
+            log(f"  + {sub}/{ses}  EDF {info['edf']/1e6:.0f}MB  "
+                f"valid_win {candidate['n_valid_win']}/576")
             if len(chosen) >= n_subjects:
                 break
     return chosen
@@ -103,8 +103,8 @@ def select_sessions(task, peers, n_subjects, win_start, win_stop, log):
 
 def process_session(sub, ses, task, log):
     """Run the full per-session chain. Returns path to fidelity csv or None."""
-    d = os.path.join(HERE, "outputs", "subjects", f"{sub}_{ses}")
-    os.makedirs(d, exist_ok=True)
+    session_dir = os.path.join(HERE, "outputs", "subjects", f"{sub}_{ses}")
+    os.makedirs(session_dir, exist_ok=True)
     sub_label = sub.replace("sub-", "")
     ses_label = ses.replace("ses-", "")
 
@@ -112,63 +112,63 @@ def process_session(sub, ses, task, log):
                           f"{sub}_{ses}_task-{task}_events.tsv")
     eeg = os.path.join(HERE, "data", DATASET, sub, ses, "eeg",
                        f"{sub}_{ses}_task-{task}_eeg.edf")
-    enc = os.path.join(d, "encoding_trials.csv")
-    y = os.path.join(d, "Y_t5.npy")
-    x = os.path.join(d, "X_eeg.npy")
-    tmeta = os.path.join(d, "trial_metadata.csv")
-    fid = os.path.join(d, "fidelity_results_corrected.csv")
+    enc = os.path.join(session_dir, "encoding_trials.csv")
+    y_path = os.path.join(session_dir, "Y_t5.npy")
+    x_path = os.path.join(session_dir, "X_eeg.npy")
+    tmeta = os.path.join(session_dir, "trial_metadata.csv")
+    fid = os.path.join(session_dir, "fidelity_results_corrected.csv")
 
     # The per-session chain, run as subprocesses rather than imports. Each stage
     # stays independently runnable and debuggable on one session, and a crash in
     # one session cannot take down the whole scale-up. Everything lands under
     # this session's own directory, so sessions never overwrite each other.
-    S = os.path.join(HERE, "code")
+    code_dir = os.path.join(HERE, "code")
     steps = [
-        ([PY, os.path.join(S, "step03_download_session.py"),
+        ([PY, os.path.join(code_dir, "step03_download_session.py"),
           "--sub", sub_label, "--ses", ses_label, "--task", task], "download"),
-        ([PY, os.path.join(S, "step05_create_encoding_trials.py"),
+        ([PY, os.path.join(code_dir, "step05_create_encoding_trials.py"),
           "--events", events, "--eeg", eeg,
-          "--out-csv", enc, "--out-summary", os.path.join(d, "encoding_trials_summary.txt")],
+          "--out-csv", enc, "--out-summary", os.path.join(session_dir, "encoding_trials_summary.txt")],
          "encoding_trials"),
-        ([PY, os.path.join(S, "step06_build_trial_targets.py"),
-          "--trials", enc, "--out-y", y,
-          "--out-meta", os.path.join(d, "target_metadata.json"),
-          "--out-map", os.path.join(d, "trial_targets_metadata.csv")], "Y_t5"),
-        ([PY, os.path.join(S, "step07_extract_eeg_features.py"),
-          "--trials", enc, "--out-x", x, "--out-meta-csv", tmeta,
-          "--out-meta-json", os.path.join(d, "eeg_feature_metadata.json")], "X_eeg"),
-        ([PY, os.path.join(S, "step08_run_ridge_cv.py"),
-          "--x", x, "--y", y, "--meta", tmeta,
+        ([PY, os.path.join(code_dir, "step06_build_trial_targets.py"),
+          "--trials", enc, "--out-y", y_path,
+          "--out-meta", os.path.join(session_dir, "target_metadata.json"),
+          "--out-map", os.path.join(session_dir, "trial_targets_metadata.csv")], "Y_t5"),
+        ([PY, os.path.join(code_dir, "step07_extract_eeg_features.py"),
+          "--trials", enc, "--out-x", x_path, "--out-meta-csv", tmeta,
+          "--out-meta-json", os.path.join(session_dir, "eeg_feature_metadata.json")], "X_eeg"),
+        ([PY, os.path.join(code_dir, "step08_run_ridge_cv.py"),
+          "--x", x_path, "--y", y_path, "--meta", tmeta,
           "--out-csv", fid,
-          "--out-pred", os.path.join(d, "predicted_embeddings_corrected.npy"),
-          "--out-meta", os.path.join(d, "ridge_corrected_metadata.json"),
-          "--out-summary", os.path.join(d, "ridge_corrected_summary.txt")], "corrected_metrics"),
+          "--out-pred", os.path.join(session_dir, "predicted_embeddings_corrected.npy"),
+          "--out-meta", os.path.join(session_dir, "ridge_corrected_metadata.json"),
+          "--out-summary", os.path.join(session_dir, "ridge_corrected_summary.txt")], "corrected_metrics"),
     ]
     for cmd, name in steps:
-        rc = run(cmd, log)
+        return_code = run(cmd, log)
         # step05_create_encoding_trials exits 2 only if trials dropped; for screened
         # valid sessions it should be 0. Any nonzero on other steps = abort.
-        if rc != 0:
-            log(f"    ABORT session {sub}/{ses} at step '{name}' (exit {rc})")
+        if return_code != 0:
+            log(f"    ABORT session {sub}/{ses} at step '{name}' (exit {return_code})")
             return None
     return fid
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--task", default="ltpFR2")
-    ap.add_argument("--n-subjects", type=int, default=5)
-    ap.add_argument("--peers-order", default=os.path.join(HERE, "results/embeddings/peers_word_order.csv"))
-    ap.add_argument("--win-start", type=float, default=0.300)
-    ap.add_argument("--win-stop", type=float, default=0.800)
-    ap.add_argument("--combined", default=os.path.join(HERE, "outputs/all_subjects_fidelity_results.csv"))
-    ap.add_argument("--report", default=os.path.join(HERE, "outputs/all_subjects_summary.txt"))
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--task", default="ltpFR2")
+    parser.add_argument("--n-subjects", type=int, default=5)
+    parser.add_argument("--peers-order", default=os.path.join(HERE, "results/embeddings/peers_word_order.csv"))
+    parser.add_argument("--win-start", type=float, default=0.300)
+    parser.add_argument("--win-stop", type=float, default=0.800)
+    parser.add_argument("--combined", default=os.path.join(HERE, "outputs/all_subjects_fidelity_results.csv"))
+    parser.add_argument("--report", default=os.path.join(HERE, "outputs/all_subjects_summary.txt"))
+    args = parser.parse_args()
 
     peers = peers_word_set(args.peers_order)
-    fh = open(args.report, "w")
+    report_file = open(args.report, "w")
 
-    log = Tee(fh)
+    log = Tee(report_file)
 
     log("=" * 74)
     log("MULTI-SUBJECT ltpFR2 SCALING (NOT final mixed-effects)")
@@ -179,34 +179,25 @@ def main():
     if not chosen:
         sys.exit("No valid sessions found.")
     log(f"\nselected {len(chosen)} sessions:")
-    for sub, ses, edf, c in chosen:
+    for sub, ses, edf, candidate in chosen:
         log(f"  {sub}/{ses}  ({edf/1e6:.0f} MB)")
 
-    # -----------------------------------------------------------------
-    # Process each session
-    # -----------------------------------------------------------------
     fid_paths = []
-    for i, (sub, ses, edf, c) in enumerate(chosen, 1):
+    for i, (sub, ses, edf, candidate) in enumerate(chosen, 1):
         log(f"\n[{i}/{len(chosen)}] === {sub}/{ses} ===")
-        p = process_session(sub, ses, args.task, log)
-        if p:
-            fid_paths.append(p)
-            log(f"    OK -> {os.path.relpath(p, HERE)}")
+        fid_path = process_session(sub, ses, args.task, log)
+        if fid_path:
+            fid_paths.append(fid_path)
+            log(f"    OK -> {os.path.relpath(fid_path, HERE)}")
 
     if not fid_paths:
         sys.exit("No sessions processed successfully.")
 
-    # -----------------------------------------------------------------
-    # Combine
-    # -----------------------------------------------------------------
-    frames = [pd.read_csv(p) for p in fid_paths]
+    frames = [pd.read_csv(fid_path) for fid_path in fid_paths]
     combined = pd.concat(frames, ignore_index=True)[COMBINED_COLS]
     combined.to_csv(args.combined, index=False)
     log(f"\ncombined -> {os.path.relpath(args.combined, HERE)}  ({len(combined)} rows)")
 
-    # -----------------------------------------------------------------
-    # Validate combined
-    # -----------------------------------------------------------------
     log("\n" + "=" * 74)
     log("COMBINED VALIDATION")
     log("=" * 74)
@@ -231,9 +222,6 @@ def main():
                 "centered_top1_correct", "centered_top5_correct", "centered_top10_correct"):
         check(f"{col} is 0/1", set(combined[col].unique()) <= {0, 1})
 
-    # -----------------------------------------------------------------
-    # Summary prints
-    # -----------------------------------------------------------------
     log("\n--- combined summary ---")
     n_sub = combined.subject.nunique()
     n_ses = combined.groupby(["subject", "session"]).ngroups
@@ -249,33 +237,33 @@ def main():
                "centered_true_word_percentile", "centered_top1_correct",
                "centered_top5_correct", "centered_top10_correct"]
     log("\n--- mean CORRECTED metrics by subject ---")
-    by = combined.groupby(["subject", "session"])[metrics].mean()
+    means = combined.groupby(["subject", "session"])[metrics].mean()
     with pd.option_context("display.width", 220, "display.max_columns", None,
                            "display.float_format", lambda v: f"{v:.3f}"):
-        log(by.to_string())
+        log(means.to_string())
 
     # real vs shuffled by subject: read each session's metadata json
     log("\n--- REAL vs SHUFFLED decoding by subject (key retrieval metrics) ---")
     log(f"{'subject/session':22} {'metric':<28} {'real':>9} {'shuffled':>9}")
     key_metrics = ["true_word_percentile", "centered_true_word_percentile",
                    "top5_correct", "top10_correct"]
-    for p in fid_paths:
-        d = os.path.dirname(p)
-        mj = os.path.join(d, "ridge_corrected_metadata.json")
-        if not os.path.isfile(mj):
+    for fid_path in fid_paths:
+        session_dir = os.path.dirname(fid_path)
+        meta_json_path = os.path.join(session_dir, "ridge_corrected_metadata.json")
+        if not os.path.isfile(meta_json_path):
             continue
-        m = json.load(open(mj))
-        tag = f"{m.get('subject')}/ses-{m.get('session')}"
-        rvs = m.get("real_vs_shuffled", {})
-        for km in key_metrics:
-            if km in rvs:
-                log(f"{tag:22} {km:<28} {rvs[km]['real']:>9.4f} "
-                    f"{rvs[km]['shuffled']:>9.4f}")
+        meta = json.load(open(meta_json_path))
+        tag = f"{meta.get('subject')}/ses-{meta.get('session')}"
+        real_vs_shuffled = meta.get("real_vs_shuffled", {})
+        for key_metric in key_metrics:
+            if key_metric in real_vs_shuffled:
+                log(f"{tag:22} {key_metric:<28} {real_vs_shuffled[key_metric]['real']:>9.4f} "
+                    f"{real_vs_shuffled[key_metric]['shuffled']:>9.4f}")
 
     log("\n*** MULTI-SUBJECT SMOKE-SCALE — corrected metrics, per-subject "
         "held-out CV. NOT the mixed-effects model. ***")
     log("STATUS: " + ("OK" if log.fail == 0 else f"FAILED ({log.fail} checks)"))
-    fh.close()
+    report_file.close()
     sys.exit(0 if log.fail == 0 else 1)
 
 

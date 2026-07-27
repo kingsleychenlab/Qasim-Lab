@@ -39,97 +39,100 @@ EEG_BINARY_EXT = (".edf", ".bdf", ".set", ".fdt", ".eeg", ".vhdr", ".vmrk")
 
 def list_prefix(prefix):
     """Anonymous ListObjectsV2 -> list of (key, size)."""
-    out, token = [], None
+    keys, token = [], None
     while True:
         params = {"list-type": "2", "prefix": prefix}
         if token:
             params["continuation-token"] = token
-        r = requests.get(BUCKET, params=params, timeout=60)
-        r.raise_for_status()
-        root = ET.fromstring(r.text)
-        for c in root.findall(f"{NS}Contents"):
-            out.append((c.find(f"{NS}Key").text, int(c.find(f"{NS}Size").text)))
-        trunc = root.find(f"{NS}IsTruncated")
-        if trunc is not None and trunc.text == "true":
+        response = requests.get(BUCKET, params=params, timeout=60)
+        response.raise_for_status()
+        root = ET.fromstring(response.text)
+        for content in root.findall(f"{NS}Contents"):
+            keys.append((content.find(f"{NS}Key").text, int(content.find(f"{NS}Size").text)))
+        truncated = root.find(f"{NS}IsTruncated")
+        if truncated is not None and truncated.text == "true":
             token = root.find(f"{NS}NextContinuationToken").text
         else:
             break
-    return out
+    return keys
 
 
 def download_key(key, dest_root, chunk=1024 * 1024):
     """Stream one S3 key to dest_root, preserving the path below the dataset id."""
-    rel = key.split(f"{DATASET}/", 1)[1]
-    out = os.path.join(dest_root, DATASET, rel)
-    os.makedirs(os.path.dirname(out), exist_ok=True)
-    if os.path.exists(out):
-        print(f"  skip (exists)  {rel}")
+    rel_path = key.split(f"{DATASET}/", 1)[1]
+    dest_path = os.path.join(dest_root, DATASET, rel_path)
+    dataset_root = os.path.realpath(os.path.join(dest_root, DATASET))
+    if os.path.commonpath([dataset_root, os.path.realpath(dest_path)]) != dataset_root:
+        raise ValueError(f"refusing to write outside dataset dir: {key}")
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    if os.path.exists(dest_path):
+        print(f"  skip (exists)  {rel_path}")
         return
-    tmp = out + ".part"
+    tmp_path = dest_path + ".part"
     url = f"{BUCKET}/{key}"
-    got = 0
-    with requests.get(url, stream=True, timeout=300) as r:
-        r.raise_for_status()
-        with open(tmp, "wb") as f:
-            for c in r.iter_content(chunk_size=chunk):
-                f.write(c)
-                got += len(c)
-    os.replace(tmp, out)
-    print(f"  ok  {got/1e6:8.2f} MB  {rel}")
+    downloaded_bytes = 0
+    with requests.get(url, stream=True, timeout=300) as response:
+        response.raise_for_status()
+        with open(tmp_path, "wb") as f:
+            for chunk_data in response.iter_content(chunk_size=chunk):
+                f.write(chunk_data)
+                downloaded_bytes += len(chunk_data)
+    os.replace(tmp_path, dest_path)
+    print(f"  ok  {downloaded_bytes/1e6:8.2f} MB  {rel_path}")
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--sub", help="Subject label without 'sub-' prefix, e.g. LTP063")
-    ap.add_argument("--ses", help="Session label without 'ses-' prefix, e.g. 15")
-    ap.add_argument("--dest", default=DEFAULT_DEST, help="Destination root (default: ./data)")
-    ap.add_argument("--skip-eeg", action="store_true", help="Download sidecars only, skip large EEG binaries")
-    ap.add_argument("--task", default=None,
-                    help="Only download files for this task (e.g. ltpFR2). Files for OTHER "
-                         "tasks are skipped; generic sidecars with no 'task-' in the name are "
-                         "always kept. Important for mixed sessions (e.g. ltpFR2 + VFFR).")
-    ap.add_argument("--list-subject", metavar="LABEL",
-                    help="List all sessions + EEG file sizes for a subject, then exit")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--sub", help="Subject label without 'sub-' prefix, e.g. LTP063")
+    parser.add_argument("--ses", help="Session label without 'ses-' prefix, e.g. 15")
+    parser.add_argument("--dest", default=DEFAULT_DEST, help="Destination root (default: ./data)")
+    parser.add_argument("--skip-eeg", action="store_true", help="Download sidecars only, skip large EEG binaries")
+    parser.add_argument("--task", default=None,
+                        help="Only download files for this task (e.g. ltpFR2). Files for OTHER "
+                             "tasks are skipped; generic sidecars with no 'task-' in the name are "
+                             "always kept. Important for mixed sessions (e.g. ltpFR2 + VFFR).")
+    parser.add_argument("--list-subject", metavar="LABEL",
+                        help="List all sessions + EEG file sizes for a subject, then exit")
+    args = parser.parse_args()
 
     # Always fetch the small top-level metadata files.
-    top = [f"{DATASET}/{f}" for f in (
+    top_level_keys = [f"{DATASET}/{f}" for f in (
         "dataset_description.json", "README", "CHANGES",
         "participants.tsv", "participants.json",
     )]
 
     if args.list_subject:
         keys = list_prefix(f"{DATASET}/sub-{args.list_subject}/")
-        eeg = [(k, s) for k, s in keys if k.endswith(EEG_BINARY_EXT)]
-        print(f"Subject sub-{args.list_subject}: {len(keys)} files, {len(eeg)} EEG binaries")
-        for k, s in sorted(eeg, key=lambda x: x[1]):
-            print(f"  {s/1e6:8.1f} MB  {k}")
-        if eeg:
-            smallest = min(eeg, key=lambda x: x[1])
+        eeg_files = [(key, size) for key, size in keys if key.endswith(EEG_BINARY_EXT)]
+        print(f"Subject sub-{args.list_subject}: {len(keys)} files, {len(eeg_files)} EEG binaries")
+        for key, size in sorted(eeg_files, key=lambda x: x[1]):
+            print(f"  {size/1e6:8.1f} MB  {key}")
+        if eeg_files:
+            smallest = min(eeg_files, key=lambda x: x[1])
             print(f"\nSmallest EEG file: {smallest[0]} ({smallest[1]/1e6:.1f} MB)")
         return
 
     if not args.sub or not args.ses:
-        ap.error("--sub and --ses are required (unless using --list-subject)")
+        parser.error("--sub and --ses are required (unless using --list-subject)")
 
     prefix = f"{DATASET}/sub-{args.sub}/ses-{args.ses}/"
     keys = list_prefix(prefix)
     if not keys:
-        ap.error(f"No files found under {prefix} (check --sub / --ses).")
+        parser.error(f"No files found under {prefix} (check --sub / --ses).")
 
-    to_get = top + [k for k, _ in keys]
+    keys_to_get = top_level_keys + [key for key, _ in keys]
     if args.task:
         # Keep files for this task + generic files that carry no 'task-' label
         # (electrodes, coordsystem, scans, top-level metadata). Drop other tasks.
-        to_get = [k for k in to_get
-                  if ("task-" not in os.path.basename(k)) or (f"task-{args.task}" in k)]
+        keys_to_get = [key for key in keys_to_get
+                       if ("task-" not in os.path.basename(key)) or (f"task-{args.task}" in key)]
     if args.skip_eeg:
-        to_get = [k for k in to_get if not k.endswith(EEG_BINARY_EXT)]
+        keys_to_get = [key for key in keys_to_get if not key.endswith(EEG_BINARY_EXT)]
 
-    print(f"Downloading {len(to_get)} files for sub-{args.sub}/ses-{args.ses} "
+    print(f"Downloading {len(keys_to_get)} files for sub-{args.sub}/ses-{args.ses} "
           f"into {args.dest}/{DATASET}/ ...")
-    for k in to_get:
-        download_key(k, args.dest)
+    for key in keys_to_get:
+        download_key(key, args.dest)
     print("Done.")
 
 

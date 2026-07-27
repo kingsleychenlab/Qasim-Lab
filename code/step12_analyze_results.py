@@ -46,60 +46,61 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True)
     ap.add_argument("--tag", required=True, help="short label, e.g. 32")
-    a = ap.parse_args()
-    comb = pd.read_csv(a.input)
-    n_sub = comb.subject.nunique()
-    n_ses = comb.groupby(["subject", "session"]).ngroups
-    n = len(comb)
-    n_rec = int((comb.recalled == 1).sum()); n_forg = int((comb.recalled == 0).sum())
-    rem = comb.loc[comb.recalled == 1, "embedding_fidelity"].mean()
-    forg = comb.loc[comb.recalled == 0, "embedding_fidelity"].mean()
+    args = ap.parse_args()
+    combined = pd.read_csv(args.input)
+    n_sub = combined.subject.nunique()
+    n_ses = combined.groupby(["subject", "session"]).ngroups
+    n_trials = len(combined)
+    n_rec = int((combined.recalled == 1).sum()); n_forg = int((combined.recalled == 0).sum())
+    rem = combined.loc[combined.recalled == 1, "embedding_fidelity"].mean()
+    forg = combined.loc[combined.recalled == 0, "embedding_fidelity"].mean()
 
     # Fit via step11 as a subprocess. Every output is tagged with N, so a scaled
     # run never overwrites the canonical 4-subject files.
-    fm_csv = os.path.join(HERE, f"outputs/final_memory_model{a.tag}_results.csv")
+    model_csv = os.path.join(HERE, f"outputs/final_memory_model{args.tag}_results.csv")
     subprocess.run([PY, os.path.join(HERE, "code/step11_run_memory_model.py"),
-                    "--input", a.input,
-                    "--out-summary", os.path.join(HERE, f"outputs/final_memory_model{a.tag}_summary.txt"),
-                    "--out-csv", fm_csv,
-                    "--out-meta", os.path.join(HERE, f"outputs/final_memory_model{a.tag}_metadata.json")],
+                    "--input", args.input,
+                    "--out-summary", os.path.join(HERE, f"outputs/final_memory_model{args.tag}_summary.txt"),
+                    "--out-csv", model_csv,
+                    "--out-meta", os.path.join(HERE, f"outputs/final_memory_model{args.tag}_metadata.json")],
                    check=True, capture_output=True, text=True)
-    fmr = pd.read_csv(fm_csv)
-    # The headline number is the GLMM on raw_cosine. step11 also writes the
-    # fallback fit and three supplementary metrics to the same CSV, so it takes
-    # both filters to pull out the one row the plan asks about.
-    mr = fmr[(fmr.metric == "raw_cosine") & (fmr.model.str.contains("GLMM"))].iloc[0]
-    OR, coef, p = float(mr.odds_ratio), float(mr.coef_per_sd), float(mr.p_approx)
-    ci = [float(mr.ci_low), float(mr.ci_high)]; concl = str(mr.direction)
+    final_model_rows = pd.read_csv(model_csv)
+    # The headline number is the GLMM on raw_cosine; step11 also writes the fallback
+    # fit and supplementary metrics to the same CSV, so both filters are needed.
+    main_row = final_model_rows[(final_model_rows.metric == "raw_cosine")
+                                & (final_model_rows.model.str.contains("GLMM"))].iloc[0]
+    OR, coef, p = float(main_row.odds_ratio), float(main_row.coef_per_sd), float(main_row.p_approx)
+    ci = [float(main_row.ci_low), float(main_row.ci_high)]; conclusion = str(main_row.direction)
 
-    # sanity + shuffled aggregation across sessions
+    # Aggregate the per-session sanity metrics and shuffled-label control.
     rank_cols = ["true_word_rank", "true_word_percentile", "top1_correct", "top5_correct",
                  "top10_correct", "centered_true_word_percentile", "centered_top5_correct",
                  "centered_top10_correct"]
-    frames, rvs_list = [], []
-    for (sub, ses), _ in comb.groupby(["subject", "session"]):
-        d = os.path.join(SUBJ, f"sub-{sub}_ses-{ses}")
-        fp = os.path.join(d, "fidelity_results_corrected.csv")
-        if os.path.isfile(fp):
-            frames.append(pd.read_csv(fp))
-        mj = os.path.join(d, "ridge_corrected_metadata.json")
-        if os.path.isfile(mj):
-            rvs_list.append(json.load(open(mj)).get("real_vs_shuffled", {}))
-    allrows = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
-    sanity = {c: float(allrows[c].mean()) for c in rank_cols if c in allrows.columns}
+    per_session_frames, real_vs_shuffled_records = [], []
+    for (sub, ses), _ in combined.groupby(["subject", "session"]):
+        session_dir = os.path.join(SUBJ, f"sub-{sub}_ses-{ses}")
+        fidelity_path = os.path.join(session_dir, "fidelity_results_corrected.csv")
+        if os.path.isfile(fidelity_path):
+            per_session_frames.append(pd.read_csv(fidelity_path))
+        metadata_path = os.path.join(session_dir, "ridge_corrected_metadata.json")
+        if os.path.isfile(metadata_path):
+            real_vs_shuffled_records.append(json.load(open(metadata_path)).get("real_vs_shuffled", {}))
+    all_fidelity = pd.concat(per_session_frames, ignore_index=True) if per_session_frames else pd.DataFrame()
+    sanity_means = {c: float(all_fidelity[c].mean()) for c in rank_cols if c in all_fidelity.columns}
 
-    def rvs(m, w):
-        v = [r[m][w] for r in rvs_list if m in r]
-        return float(np.mean(v)) if v else float("nan")
-    shuf = {m: {"real": rvs(m, "real"), "shuffled": rvs(m, "shuffled")}
-            for m in ["true_word_percentile", "centered_true_word_percentile",
-                      "top5_correct", "top10_correct"]}
+    def real_vs_shuffled_mean(metric, which):
+        values = [record[metric][which] for record in real_vs_shuffled_records if metric in record]
+        return float(np.mean(values)) if values else float("nan")
+    shuffled_control = {metric: {"real": real_vs_shuffled_mean(metric, "real"),
+                                 "shuffled": real_vs_shuffled_mean(metric, "shuffled")}
+                        for metric in ["true_word_percentile", "centered_true_word_percentile",
+                                       "top5_correct", "top10_correct"]}
 
     verdict = ("STAYS NULL — no significant fidelity->recall effect."
-               if concl == "no different" else
+               if conclusion == "no different" else
                "CHANGED — a significant effect appeared; investigate.")
 
-    L = [
+    report_lines = [
         "=" * 80,
         f"{n_sub}-SUBJECT SCALE-UP  (vs 16- and 4-subject)",
         "=" * 80,
@@ -112,7 +113,7 @@ def main():
         f"  {'metric':16} {'4-subj':>12} {'16-subj':>12} {f'{n_sub}-subj':>12}",
         f"  {'subjects':16} {REF[4]['subjects']:>12} {REF[16]['subjects']:>12} {n_sub:>12}",
         f"  {'sessions':16} {REF[4]['sessions']:>12} {REF[16]['sessions']:>12} {n_ses:>12}",
-        f"  {'trials':16} {REF[4]['trials']:>12} {REF[16]['trials']:>12} {n:>12}",
+        f"  {'trials':16} {REF[4]['trials']:>12} {REF[16]['trials']:>12} {n_trials:>12}",
         f"  {'recalled':16} {REF[4]['recalled']:>12} {REF[16]['recalled']:>12} {n_rec:>12}",
         f"  {'forgotten':16} {REF[4]['forgotten']:>12} {REF[16]['forgotten']:>12} {n_forg:>12}",
         f"  {'odds ratio':16} {REF[4]['OR']:>12.4f} {REF[16]['OR']:>12.4f} {OR:>12.4f}",
@@ -123,37 +124,37 @@ def main():
         f"  {'remembered':16} {REF[4]['rem']:>12.5f} {REF[16]['rem']:>12.5f} {rem:>12.5f}",
         f"  {'forgotten':16} {REF[4]['forg']:>12.5f} {REF[16]['forg']:>12.5f} {forg:>12.5f}",
         f"  {'diff':16} {REF[4]['diff']:>+12.5f} {REF[16]['diff']:>+12.5f} {rem-forg:>+12.5f}",
-        f"  conclusion ({n_sub}-subj): {concl}",
+        f"  conclusion ({n_sub}-subj): {conclusion}",
         "",
         f"WORD-SPECIFIC DECODING SANITY ({n_sub}-subject, averaged over sessions)",
         "  chance: percentile 0.5, top5 ~0.0087, top10 ~0.0174",
     ]
-    for k, v in sanity.items():
-        L.append(f"  {k:32}: {v:.4f}")
-    L += ["", f"REAL vs SHUFFLED-LABEL CONTROL ({n_sub}-subject)",
-          f"  {'metric':32} {'real':>8} {'shuffled':>9}"]
-    for m, d in shuf.items():
-        L.append(f"  {m:32} {d['real']:>8.4f} {d['shuffled']:>9.4f}")
-    L += ["", "VERDICT",
+    for name, value in sanity_means.items():
+        report_lines.append(f"  {name:32}: {value:.4f}")
+    report_lines += ["", f"REAL vs SHUFFLED-LABEL CONTROL ({n_sub}-subject)",
+                     f"  {'metric':32} {'real':>8} {'shuffled':>9}"]
+    for metric, pair in shuffled_control.items():
+        report_lines.append(f"  {metric:32} {pair['real']:>8.4f} {pair['shuffled']:>9.4f}")
+    report_lines += ["", "VERDICT",
           f"  Memory effect: {verdict}",
           "  Word-specific decoding: " + (
               "at chance (percentile ~0.5, real ~= shuffled)."
-              if abs(sanity.get("true_word_percentile", 0.5) - 0.5) < 0.03 else
-              f"ABOVE chance (percentile {sanity.get('true_word_percentile'):.3f}) — investigate."),
+              if abs(sanity_means.get("true_word_percentile", 0.5) - 0.5) < 0.03 else
+              f"ABOVE chance (percentile {sanity_means.get('true_word_percentile'):.3f}) — investigate."),
           "",
           "FINAL CONCLUSION",
           "  The project tested whether later-remembered words showed higher EEG-to-AI",
           f"  embedding fidelity than forgotten words. With {n_sub} subjects, the",
           "  session-aware logistic mixed-effects model " + (
               "still did not support this prediction: embedding fidelity was not "
-              "significantly associated with later recall." if concl == "no different"
+              "significantly associated with later recall." if conclusion == "no different"
               else "CHANGED — see table above; interpret carefully."),
           "=" * 80]
-    txt = "\n".join(L) + "\n"
-    open(os.path.join(HERE, f"outputs/{n_sub}subject_results_summary.txt"), "w").write(txt)
+    report_text = "\n".join(report_lines) + "\n"
+    open(os.path.join(HERE, f"outputs/{n_sub}subject_results_summary.txt"), "w").write(report_text)
     open(os.path.join(HERE, f"outputs/{n_sub}subject_results_summary.md"), "w").write(
-        f"# {n_sub}-Subject Scale-Up — Results\n\n```\n" + txt + "```\n")
-    print(txt)
+        f"# {n_sub}-Subject Scale-Up — Results\n\n```\n" + report_text + "```\n")
+    print(report_text)
 
 
 if __name__ == "__main__":

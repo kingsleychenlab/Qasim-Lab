@@ -40,27 +40,27 @@ OUT_COLS = ["subject", "session", "trial", "serialpos", "word", "item_num",
 
 def main():
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    ap = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
     # Canonical session going forward = ltpFR2 sub-LTP269/ses-20:
     # 576 words, 100% peers coverage, 576/576 valid 300-800 ms EEG windows
     # (full recording, EDF 4741 s). Earlier sessions are archived and shouldn't
     # be used: sub-LTP063 (ltpFR, low coverage) and sub-LTP293/ses-3 (ltpFR2 but
     # truncated EEG, only 449/576 windows fit) under outputs/archive_*/.
-    ap.add_argument("--events", default=os.path.join(
+    parser.add_argument("--events", default=os.path.join(
         here, "data/ds004395/sub-LTP269/ses-20/eeg/"
         "sub-LTP269_ses-20_task-ltpFR2_events.tsv"))
-    ap.add_argument("--eeg", default=os.path.join(
+    parser.add_argument("--eeg", default=os.path.join(
         here, "data/ds004395/sub-LTP269/ses-20/eeg/"
         "sub-LTP269_ses-20_task-ltpFR2_eeg.edf"))
-    ap.add_argument("--peers-order", default=os.path.join(here, "results/embeddings/peers_word_order.csv"))
-    ap.add_argument("--out-csv", default=os.path.join(here, "outputs/encoding_trials.csv"))
-    ap.add_argument("--out-summary", default=os.path.join(
+    parser.add_argument("--peers-order", default=os.path.join(here, "results/embeddings/peers_word_order.csv"))
+    parser.add_argument("--out-csv", default=os.path.join(here, "outputs/encoding_trials.csv"))
+    parser.add_argument("--out-summary", default=os.path.join(
         here, "outputs/encoding_trials_summary.txt"))
-    ap.add_argument("--win-start", type=float, default=0.300,
-                    help="EEG window start relative to word onset, in seconds.")
-    ap.add_argument("--win-stop", type=float, default=0.800,
-                    help="EEG window stop relative to word onset, in seconds.")
-    args = ap.parse_args()
+    parser.add_argument("--win-start", type=float, default=0.300,
+                        help="EEG window start relative to word onset, in seconds.")
+    parser.add_argument("--win-stop", type=float, default=0.800,
+                        help="EEG window stop relative to word onset, in seconds.")
+    args = parser.parse_args()
 
     # Hard stop if the event file is missing.
     if not os.path.isfile(args.events):
@@ -77,127 +77,113 @@ def main():
             log.warn("EEG file not found on disk (path still recorded in output)",
                      args.eeg)
 
-        # -----------------------------------------------------------------
         # Load events
-        # -----------------------------------------------------------------
-        ev = pd.read_csv(args.events, sep="\t", na_values=["n/a", ""])
+        events = pd.read_csv(args.events, sep="\t", na_values=["n/a", ""])
         for col in ("trial_type", "trial", "item_name", "item_num", "onset", "sample"):
-            if col not in ev.columns:
+            if col not in events.columns:
                 sys.exit(f"ERROR: expected column '{col}' missing from {args.events}")
 
-        word_ev = ev[ev.trial_type == WORD].copy()
-        rec_ev = ev[ev.trial_type == REC_WORD].copy()
+        word_events = events[events.trial_type == WORD].copy()
+        rec_events = events[events.trial_type == REC_WORD].copy()
 
         log.rule("COUNTS")
-        log(f"WORD events     : {len(word_ev)}")
-        log(f"REC_WORD events : {len(rec_ev)}")
+        log(f"WORD events     : {len(word_events)}")
+        log(f"REC_WORD events : {len(rec_events)}")
 
-        # -----------------------------------------------------------------
-        # Missing item_num reporting (don't silently drop)
-        # -----------------------------------------------------------------
-        w_missing = word_ev[word_ev.item_num.isna()]
-        r_missing = rec_ev[rec_ev.item_num.isna()]
-        if len(w_missing):
-            log.warn(f"{len(w_missing)} WORD events have missing item_num",
-                     f"onsets={w_missing.onset.tolist()[:10]}")
+        # Report missing item_num rather than silently dropping them
+        words_missing_itemnum = word_events[word_events.item_num.isna()]
+        recs_missing_itemnum = rec_events[rec_events.item_num.isna()]
+        if len(words_missing_itemnum):
+            log.warn(f"{len(words_missing_itemnum)} WORD events have missing item_num",
+                     f"onsets={words_missing_itemnum.onset.tolist()[:10]}")
         else:
             log("all WORD events have item_num.")
-        if len(r_missing):
-            log.warn(f"{len(r_missing)} REC_WORD events have missing item_num "
+        if len(recs_missing_itemnum):
+            log.warn(f"{len(recs_missing_itemnum)} REC_WORD events have missing item_num "
                      "(cannot be used for matching)",
-                     f"onsets={r_missing.onset.tolist()[:10]}")
+                     f"onsets={recs_missing_itemnum.onset.tolist()[:10]}")
         else:
             log("all REC_WORD events have item_num.")
 
         # Intrusions in recall (item_num == -1 per events.json) never match a WORD.
-        n_intrusion = int((rec_ev.item_num == -1).sum())
+        n_intrusion = int((rec_events.item_num == -1).sum())
         if n_intrusion:
             log(f"note: {n_intrusion} REC_WORD events are intrusions/vocalizations "
                 "(item_num == -1); these never match a presented WORD.")
 
-        # -----------------------------------------------------------------
-        # Build the recall lookup.
-        #
-        # The key is (trial, item_num), not item_num alone. ltpFR2 reuses the
-        # same 576-word pool across trials, so a bare item_num would mark a word
-        # recalled in list 3 as recalled in list 12 too, inflating the recall
-        # rate and corrupting the outcome variable.
-        #
-        # item_num == -1 flags an intrusion or vocalization (per events.json):
-        # the subject said something that was not a presented word. Dropped
-        # here, since by definition it can't mark any studied word as recalled.
-        # -----------------------------------------------------------------
-        rec_valid = rec_ev.dropna(subset=["trial", "item_num"])
-        rec_valid = rec_valid[rec_valid.item_num != -1]
+        # Build the recall lookup keyed on (trial, item_num), not item_num alone.
+        # ltpFR2 reuses the same 576-word pool across trials, so a bare item_num
+        # would mark a word recalled in list 3 as recalled in list 12 too,
+        # inflating the recall rate and corrupting the outcome variable.
+        # item_num == -1 flags an intrusion/vocalization (per events.json) and is
+        # dropped: it can't mark any studied word as recalled.
+        valid_recs = rec_events.dropna(subset=["trial", "item_num"])
+        valid_recs = valid_recs[valid_recs.item_num != -1]
         recalled_keys = set(
-            zip(rec_valid.trial.astype(int), rec_valid.item_num.astype(int)))
+            zip(valid_recs.trial.astype(int), valid_recs.item_num.astype(int)))
         # Kept only to cross-check the numeric join against the recorded word
         # text. setdefault keeps the first mention: a word recalled twice in one
         # list is still just recalled.
         rec_name_by_key = {}
-        for _, r in rec_valid.iterrows():
+        for _, rec_row in valid_recs.iterrows():
             rec_name_by_key.setdefault(
-                (int(r.trial), int(r.item_num)), str(r.item_name))
+                (int(rec_row.trial), int(rec_row.item_num)), str(rec_row.item_name))
 
-        # -----------------------------------------------------------------
-        # Build one encoding trial per WORD event
-        # -----------------------------------------------------------------
+        # Build one encoding trial per WORD event.
         # serialpos = position within its list, 1-based, ordered by onset.
         # Stable sort so that events sharing an onset keep their file order
         # rather than being permuted arbitrarily.
-        word_ev = word_ev.sort_values(["trial", "onset"], kind="stable")
-        word_ev["serialpos"] = (
-            word_ev.groupby("trial").cumcount() + 1)
+        word_events = word_events.sort_values(["trial", "onset"], kind="stable")
+        word_events["serialpos"] = (
+            word_events.groupby("trial").cumcount() + 1)
 
         name_mismatches = []
         rows = []
-        for _, w in word_ev.iterrows():
-            trial = int(w.trial) if pd.notna(w.trial) else None
-            inum = int(w.item_num) if pd.notna(w.item_num) else None
-            key = (trial, inum)
-            recalled = 1 if (trial is not None and inum is not None
+        for _, word_row in word_events.iterrows():
+            trial = int(word_row.trial) if pd.notna(word_row.trial) else None
+            item_num = int(word_row.item_num) if pd.notna(word_row.item_num) else None
+            key = (trial, item_num)
+            recalled = 1 if (trial is not None and item_num is not None
                              and key in recalled_keys) else 0
 
             # Backup validation: if matched by item_num, item_name should agree.
             if recalled and key in rec_name_by_key:
-                if str(w.item_name).upper() != rec_name_by_key[key].upper():
+                if str(word_row.item_name).upper() != rec_name_by_key[key].upper():
                     name_mismatches.append(
-                        (trial, inum, str(w.item_name), rec_name_by_key[key]))
+                        (trial, item_num, str(word_row.item_name), rec_name_by_key[key]))
 
             rows.append({
-                "subject": w.subject if "subject" in word_ev.columns else None,
-                "session": int(w.session) if pd.notna(w.session) else None,
+                "subject": word_row.subject if "subject" in word_events.columns else None,
+                "session": int(word_row.session) if pd.notna(word_row.session) else None,
                 "trial": trial,
-                "serialpos": int(w.serialpos),
-                "word": w.item_name,          # keep the uppercase text exactly
-                "item_num": inum,
-                "onset": w.onset,
-                "sample": int(w["sample"]) if pd.notna(w["sample"]) else None,
+                "serialpos": int(word_row.serialpos),
+                "word": word_row.item_name,          # keep the uppercase text exactly
+                "item_num": item_num,
+                "onset": word_row.onset,
+                "sample": int(word_row["sample"]) if pd.notna(word_row["sample"]) else None,
                 "recalled": recalled,
                 "eeg_file": os.path.relpath(args.eeg, here),
                 "event_file": os.path.relpath(args.events, here),
             })
 
-        df = pd.DataFrame(rows, columns=OUT_COLS)
+        trials_df = pd.DataFrame(rows, columns=OUT_COLS)
 
-        # -----------------------------------------------------------------
         # Summary stats
-        # -----------------------------------------------------------------
         log.rule("RECALL SUMMARY")
-        n = len(df)
-        n_rec = int((df.recalled == 1).sum())
-        n_forg = int((df.recalled == 0).sum())
+        n = len(trials_df)
+        n_rec = int((trials_df.recalled == 1).sum())
+        n_forg = int((trials_df.recalled == 0).sum())
         log(f"encoding trials (rows) : {n}")
         log(f"recalled (1)           : {n_rec}")
         log(f"forgotten (0)          : {n_forg}")
         log(f"recall rate            : {n_rec / n:.4f}" if n else "recall rate: n/a")
 
-        trials = sorted(df.trial.dropna().unique().tolist())
-        log(f"unique trials/lists    : {len(trials)}  -> {trials}")
-        per_trial = df.groupby("trial").size()
+        trial_ids = sorted(trials_df.trial.dropna().unique().tolist())
+        log(f"unique trials/lists    : {len(trial_ids)}  -> {trial_ids}")
+        per_trial = trials_df.groupby("trial").size()
         log("words per trial:")
-        for t, c in per_trial.items():
-            log(f"   trial {int(t):>3} : {c} words")
+        for trial_num, count in per_trial.items():
+            log(f"   trial {int(trial_num):>3} : {count} words")
         if per_trial.nunique() > 1:
             log.warn("trials do NOT all have the same word count",
                      f"counts={sorted(per_trial.unique().tolist())}")
@@ -205,35 +191,33 @@ def main():
         log.rule("FIRST 20 ROWS")
         with pd.option_context("display.max_columns", None, "display.width", 240,
                                "display.max_colwidth", 40):
-            log(df.head(20).to_string(index=False))
+            log(trials_df.head(20).to_string(index=False))
 
-        # -----------------------------------------------------------------
         # Validation checks
-        # -----------------------------------------------------------------
         log.rule("VALIDATION CHECKS")
 
-        log.check("no missing word", df.word.notna().all(),
-                  f"{int(df.word.isna().sum())} missing")
-        log.check("no missing onset", df.onset.notna().all(),
-                  f"{int(df.onset.isna().sum())} missing")
-        log.check("no missing sample", df["sample"].notna().all(),
-                  f"{int(df['sample'].isna().sum())} missing")
+        log.check("no missing word", trials_df.word.notna().all(),
+                  f"{int(trials_df.word.isna().sum())} missing")
+        log.check("no missing onset", trials_df.onset.notna().all(),
+                  f"{int(trials_df.onset.isna().sum())} missing")
+        log.check("no missing sample", trials_df["sample"].notna().all(),
+                  f"{int(trials_df['sample'].isna().sum())} missing")
 
         # EEG-timing validity: onset/sample can be present but still be invalid
         # sentinels (onset<=0, sample<0 == -1), meaning the word was presented
         # but not captured/synced in this EDF. Matters for later EEG window
         # extraction.
-        valid_timing = (df.onset > 0) & (df["sample"] >= 0)
+        valid_timing = (trials_df.onset > 0) & (trials_df["sample"] >= 0)
         n_valid = int(valid_timing.sum())
         log.check("all WORD events have VALID EEG timing (onset>0 & sample>=0)",
                   valid_timing.all(),
-                  f"{n_valid}/{len(df)} valid ({100*valid_timing.mean():.1f}%); "
-                  f"{len(df)-n_valid} rows have sentinel onset<=0/sample<0")
+                  f"{n_valid}/{len(trials_df)} valid ({100*valid_timing.mean():.1f}%); "
+                  f"{len(trials_df)-n_valid} rows have sentinel onset<=0/sample<0")
         if not valid_timing.all():
-            bad = df[~valid_timing]
+            bad_rows = trials_df[~valid_timing]
             log.warn("rows with invalid EEG timing cannot be aligned to EEG "
                      "(word presented but not captured/synced in this EDF)",
-                     f"trials affected: {sorted(bad.trial.unique().tolist())}")
+                     f"trials affected: {sorted(bad_rows.trial.unique().tolist())}")
 
         # EEG window-fit check via MNE: the full [win_start, win_stop] window
         # must fit inside the actual recording.
@@ -246,57 +230,57 @@ def main():
                 raw = mne.io.read_raw_edf(args.eeg, preload=False, verbose="ERROR")
                 sfreq = float(raw.info["sfreq"])
                 n_times = int(raw.n_times)
-                start_s = df["sample"] + int(args.win_start * sfreq)
-                stop_s = df["sample"] + int(args.win_stop * sfreq)
-                win_ok = (df["sample"] >= 0) & (df.onset > 0) & (start_s >= 0) \
-                    & (stop_s < n_times)
+                start_sample = trials_df["sample"] + int(args.win_start * sfreq)
+                stop_sample = trials_df["sample"] + int(args.win_stop * sfreq)
+                win_ok = (trials_df["sample"] >= 0) & (trials_df.onset > 0) & (start_sample >= 0) \
+                    & (stop_sample < n_times)
                 n_win = int(win_ok.sum())
                 log.check(
                     f"all WORD events have a full EEG window "
                     f"[{int(args.win_start*1000)}-{int(args.win_stop*1000)}ms] "
                     f"inside the recording (n_times={n_times}, sfreq={sfreq:g})",
                     bool(win_ok.all()),
-                    f"{n_win}/{len(df)} fit; {len(df)-n_win} exceed EDF length")
+                    f"{n_win}/{len(trials_df)} fit; {len(trials_df)-n_win} exceed EDF length")
                 if not win_ok.all():
-                    bad = df[~win_ok].sort_values(["trial", "serialpos"])
-                    first = bad.iloc[0]
+                    bad_rows = trials_df[~win_ok].sort_values(["trial", "serialpos"])
+                    first_bad = bad_rows.iloc[0]
                     log.warn("session has words whose EEG window falls OUTSIDE the "
                              "recording -> NOT valid for canonical EEG extraction",
-                             f"first bad: trial {int(first.trial)} "
-                             f"serialpos {int(first.serialpos)} word {first.word!r}; "
-                             f"trials affected: {sorted(bad.trial.unique().tolist())}")
+                             f"first bad: trial {int(first_bad.trial)} "
+                             f"serialpos {int(first_bad.serialpos)} word {first_bad.word!r}; "
+                             f"trials affected: {sorted(bad_rows.trial.unique().tolist())}")
             except Exception as e:  # noqa: BLE001
                 log.warn("could not run MNE window-fit check", f"{type(e).__name__}: {e}")
         else:
             log.warn("EEG file absent; skipped MNE window-fit check", args.eeg)
 
         log.check("recalled is only 0 or 1",
-                  set(df.recalled.unique()) <= {0, 1},
-                  f"values={sorted(df.recalled.unique().tolist())}")
+                  set(trials_df.recalled.unique()) <= {0, 1},
+                  f"values={sorted(trials_df.recalled.unique().tolist())}")
 
         # Duplicate subject/session/trial/serialpos
-        dup_mask = df.duplicated(["subject", "session", "trial", "serialpos"], keep=False)
+        dup_mask = trials_df.duplicated(["subject", "session", "trial", "serialpos"], keep=False)
         log.check("no duplicate subject/session/trial/serialpos",
                   not dup_mask.any(), f"{int(dup_mask.sum())} duplicate rows")
         if dup_mask.any():
-            log(df[dup_mask].to_string(index=False))
+            log(trials_df[dup_mask].to_string(index=False))
 
         # item_name backup validation
         log.check("recalled matches agree on item_name (backup key)",
                   len(name_mismatches) == 0,
                   f"{len(name_mismatches)} mismatches")
-        for m in name_mismatches[:10]:
-            log(f"    trial {m[0]} item_num {m[1]}: WORD={m[2]!r} REC_WORD={m[3]!r}")
+        for mismatch in name_mismatches[:10]:
+            log(f"    trial {mismatch[0]} item_num {mismatch[1]}: WORD={mismatch[2]!r} REC_WORD={mismatch[3]!r}")
 
         # Every word exists in peers_word_order.csv
         log.rule("PEERS WORD-LIST CROSS-CHECK")
         if os.path.isfile(args.peers_order):
             peers = peers_word_set(args.peers_order)
-            session_words = df.word.str.upper()
+            session_words = trials_df.word.str.upper()
             in_peers = session_words.isin(peers)
             missing_words = sorted(set(session_words[~in_peers]))
             log(f"peers list size            : {len(peers)}")
-            log(f"encoding rows              : {len(df)}")
+            log(f"encoding rows              : {len(trials_df)}")
             log(f"rows whose word IS in peers: {int(in_peers.sum())} "
                 f"({100*in_peers.mean():.1f}%)")
             log(f"unique session words       : {session_words.nunique()}")
@@ -314,12 +298,10 @@ def main():
             log.warn("peers_word_order.csv not found; skipped word cross-check",
                      args.peers_order)
 
-        # -----------------------------------------------------------------
         # Write CSV
-        # -----------------------------------------------------------------
-        df.to_csv(args.out_csv, index=False)
+        trials_df.to_csv(args.out_csv, index=False)
         log.rule("RESULT")
-        log(f"wrote {len(df)} rows -> {args.out_csv}")
+        log(f"wrote {len(trials_df)} rows -> {args.out_csv}")
         log(f"summary -> {args.out_summary}")
         log(f"errors: {log.fail}   warnings: {log.warnings}")
         if log.fail:

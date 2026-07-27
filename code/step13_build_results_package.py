@@ -52,16 +52,16 @@ created = []
 
 
 def save(fig, name):
-    p = os.path.join(FIG, name)
-    fig.savefig(p, bbox_inches="tight")
+    fig_path = os.path.join(FIG, name)
+    fig.savefig(fig_path, bbox_inches="tight")
     plt.close(fig)
-    created.append(os.path.relpath(p, HERE))
+    created.append(os.path.relpath(fig_path, HERE))
 
 
 def glmm_row(path, metric="raw_cosine"):
     """The fitted mixed-effects row for one metric, from step11's output."""
-    fm = pd.read_csv(path)
-    return fm[(fm.metric == metric) & (fm.model.str.contains("GLMM"))].iloc[0]
+    model_rows = pd.read_csv(path)
+    return model_rows[(model_rows.metric == metric) & (model_rows.model.str.contains("GLMM"))].iloc[0]
 
 
 def main():
@@ -70,54 +70,54 @@ def main():
     args = ap.parse_args()
     tag = args.tag
 
-    trials_p = os.path.join(TAB, f"trial_fidelity_{tag}subjects.csv")
-    model_p = os.path.join(TAB, f"memory_model_{tag}subjects_results.csv")
-    for p in (trials_p, model_p):
-        if not os.path.isfile(p):
-            raise SystemExit(f"ERROR: required input missing: {p}")
+    trials_path = os.path.join(TAB, f"trial_fidelity_{tag}subjects.csv")
+    model_path = os.path.join(TAB, f"memory_model_{tag}subjects_results.csv")
+    for path in (trials_path, model_path):
+        if not os.path.isfile(path):
+            raise SystemExit(f"ERROR: required input missing: {path}")
 
-    df = pd.read_csv(trials_p)
-    emb = np.load(os.path.join(RES, "embeddings/peers_t5large_embeddings.npy"))
+    df = pd.read_csv(trials_path)
+    embeddings = np.load(os.path.join(RES, "embeddings/peers_t5large_embeddings.npy"))
     n_sub = df.subject.nunique()
     n_ses = df.groupby(["subject", "session"]).ngroups
-    rec = df[df.recalled == 1]
-    forg = df[df.recalled == 0]
+    remembered = df[df.recalled == 1]
+    forgotten = df[df.recalled == 0]
     print(f"headline run: {n_sub} subjects, {n_ses} sessions, {len(df)} trials")
 
-    # ================================================================ tables
-    g = df.groupby(["subject", "session"])
+    # Curated summary tables
+    per_session = df.groupby(["subject", "session"])
     pd.DataFrame({
-        "n_trials": g.size(),
-        "recalled": g.recalled.sum().astype(int),
-        "forgotten": (g.size() - g.recalled.sum()).astype(int),
-        "recall_rate": g.recalled.mean().round(4),
-        "mean_embedding_fidelity": g.embedding_fidelity.mean().round(5),
-        "mean_centered_percentile": g.centered_true_word_percentile.mean().round(5),
+        "n_trials": per_session.size(),
+        "recalled": per_session.recalled.sum().astype(int),
+        "forgotten": (per_session.size() - per_session.recalled.sum()).astype(int),
+        "recall_rate": per_session.recalled.mean().round(4),
+        "mean_embedding_fidelity": per_session.embedding_fidelity.mean().round(5),
+        "mean_centered_percentile": per_session.centered_true_word_percentile.mean().round(5),
     }).reset_index().to_csv(
         os.path.join(TAB, f"summary_subjects_sessions_{tag}subjects.csv"), index=False)
     created.append(f"results/tables/summary_subjects_sessions_{tag}subjects.csv")
 
-    rvf = pd.DataFrame([
-        {"group": "remembered", "n": len(rec),
-         "mean_embedding_fidelity": rec.embedding_fidelity.mean(),
-         "sd_embedding_fidelity": rec.embedding_fidelity.std(ddof=1),
-         "mean_centered_true_word_percentile": rec.centered_true_word_percentile.mean(),
-         "sd_centered_true_word_percentile": rec.centered_true_word_percentile.std(ddof=1)},
-        {"group": "forgotten", "n": len(forg),
-         "mean_embedding_fidelity": forg.embedding_fidelity.mean(),
-         "sd_embedding_fidelity": forg.embedding_fidelity.std(ddof=1),
-         "mean_centered_true_word_percentile": forg.centered_true_word_percentile.mean(),
-         "sd_centered_true_word_percentile": forg.centered_true_word_percentile.std(ddof=1)},
+    remembered_vs_forgotten = pd.DataFrame([
+        {"group": "remembered", "n": len(remembered),
+         "mean_embedding_fidelity": remembered.embedding_fidelity.mean(),
+         "sd_embedding_fidelity": remembered.embedding_fidelity.std(ddof=1),
+         "mean_centered_true_word_percentile": remembered.centered_true_word_percentile.mean(),
+         "sd_centered_true_word_percentile": remembered.centered_true_word_percentile.std(ddof=1)},
+        {"group": "forgotten", "n": len(forgotten),
+         "mean_embedding_fidelity": forgotten.embedding_fidelity.mean(),
+         "sd_embedding_fidelity": forgotten.embedding_fidelity.std(ddof=1),
+         "mean_centered_true_word_percentile": forgotten.centered_true_word_percentile.mean(),
+         "sd_centered_true_word_percentile": forgotten.centered_true_word_percentile.std(ddof=1)},
     ])
-    for c in rvf.columns:
-        if c not in ("group", "n"):
-            rvf[c] = rvf[c].round(5)
-    rvf.to_csv(os.path.join(TAB, f"remembered_vs_forgotten_{tag}subjects.csv"), index=False)
+    for col in remembered_vs_forgotten.columns:
+        if col not in ("group", "n"):
+            remembered_vs_forgotten[col] = remembered_vs_forgotten[col].round(5)
+    remembered_vs_forgotten.to_csv(os.path.join(TAB, f"remembered_vs_forgotten_{tag}subjects.csv"), index=False)
     created.append(f"results/tables/remembered_vs_forgotten_{tag}subjects.csv")
 
     # final model table (all metrics, headline run)
-    fm = pd.read_csv(model_p)
-    glmm = fm[fm.model.str.contains("GLMM")].copy()
+    model_rows = pd.read_csv(model_path)
+    glmm = model_rows[model_rows.model.str.contains("GLMM")].copy()
     label = {"raw_cosine": "raw_cosine (embedding_fidelity, MAIN)",
              "centered_cosine": "centered_cosine",
              "true_word_percentile": "true_word_percentile",
@@ -138,7 +138,7 @@ def main():
         os.path.join(TAB, f"final_model_table_{tag}subjects.csv"), index=False)
     created.append(f"results/tables/final_model_table_{tag}subjects.csv")
 
-    # ================================================================ figures
+    # Figures
     # 1) pipeline schematic (method overview; data-independent)
     fig, ax = plt.subplots(figsize=(13, 2.6))
     ax.axis("off")
@@ -164,15 +164,15 @@ def main():
 
     # 2) the core comparison: remembered vs forgotten
     fig, ax = plt.subplots(figsize=(6.5, 4.5))
-    bp = ax.boxplot([forg.embedding_fidelity.values, rec.embedding_fidelity.values],
+    boxes = ax.boxplot([forgotten.embedding_fidelity.values, remembered.embedding_fidelity.values],
                     tick_labels=["forgotten", "remembered"], patch_artist=True,
                     widths=0.55, showmeans=True, meanline=True)
-    for patch, c in zip(bp["boxes"], [GRAY, BLUE]):
-        patch.set_facecolor(c); patch.set_alpha(0.55)
+    for patch, color in zip(boxes["boxes"], [GRAY, BLUE]):
+        patch.set_facecolor(color); patch.set_alpha(0.55)
     ax.set_ylabel("embedding_fidelity (raw cosine)")
     ax.set_title("Remembered vs forgotten fidelity — distributions nearly identical\n"
-                 f"{n_sub} subjects | forgotten {forg.embedding_fidelity.mean():.4f}  "
-                 f"remembered {rec.embedding_fidelity.mean():.4f}")
+                 f"{n_sub} subjects | forgotten {forgotten.embedding_fidelity.mean():.4f}  "
+                 f"remembered {remembered.embedding_fidelity.mean():.4f}")
     save(fig, "remembered_vs_forgotten_fidelity.png")
 
     # 3) is the decoder doing anything? retrieval vs chance
@@ -201,43 +201,43 @@ def main():
     axes[1].set_title("centered_true_word_percentile (at chance)")
     axes[1].set_xlabel("centered true-word percentile"); axes[1].set_xlim(0, 1)
     axes[1].legend()
-    norms = np.linalg.norm(emb, axis=1)
+    norms = np.linalg.norm(embeddings, axis=1)
     fig.suptitle("High raw cosine is a common-direction artifact "
                  f"(T5 norms mean {norms.mean():.0f}), not word decoding", fontsize=11)
     save(fig, "raw_vs_centered_metrics.png")
 
     # 5) the model: odds ratios with OR=1 reference
     fig, ax = plt.subplots(figsize=(8.5, 4))
-    fp = glmm.assign(_o=glmm.metric.map(order)).sort_values("_o", ascending=False)
-    y = np.arange(len(fp))
-    ax.errorbar(fp.odds_ratio, y,
-                xerr=[fp.odds_ratio - fp.ci_low, fp.ci_high - fp.odds_ratio],
+    ordered_glmm = glmm.assign(_o=glmm.metric.map(order)).sort_values("_o", ascending=False)
+    y = np.arange(len(ordered_glmm))
+    ax.errorbar(ordered_glmm.odds_ratio, y,
+                xerr=[ordered_glmm.odds_ratio - ordered_glmm.ci_low, ordered_glmm.ci_high - ordered_glmm.odds_ratio],
                 fmt="o", color=BLUE, ecolor=GRAY, elinewidth=2, capsize=4, ms=8)
     ax.axvline(1.0, color="black", ls="--", lw=1.5, label="OR = 1 (no effect)")
-    ax.set_yticks(y); ax.set_yticklabels(fp.metric.map(label).fillna(fp.metric))
+    ax.set_yticks(y); ax.set_yticklabels(ordered_glmm.metric.map(label).fillna(ordered_glmm.metric))
     ax.set_xlabel("odds ratio per 1 SD (95% interval)")
     ax.set_title(f"Memory-model odds ratios ({n_sub} subjects) — all intervals span OR = 1")
     ax.legend(loc="lower right")
     save(fig, "final_model_odds_ratios.png")
 
     # 6) does more data change the answer? 4 -> 16 -> 32
-    prog = []
-    for t in ("04", "16", "32"):
-        p = os.path.join(TAB, f"memory_model_{t}subjects_results.csv")
-        if os.path.isfile(p):
-            r = glmm_row(p)
-            prog.append((int(t), float(r.odds_ratio), float(r.ci_low), float(r.ci_high)))
-    if len(prog) >= 2:
+    progression = []
+    for run_tag in ("04", "16", "32"):
+        run_path = os.path.join(TAB, f"memory_model_{run_tag}subjects_results.csv")
+        if os.path.isfile(run_path):
+            row = glmm_row(run_path)
+            progression.append((int(run_tag), float(row.odds_ratio), float(row.ci_low), float(row.ci_high)))
+    if len(progression) >= 2:
         fig, ax = plt.subplots(figsize=(7.5, 4.5))
-        xs = np.arange(len(prog))
-        ors = [p[1] for p in prog]
-        lo = [p[1] - p[2] for p in prog]
-        hi = [p[3] - p[1] for p in prog]
+        xs = np.arange(len(progression))
+        ors = [entry[1] for entry in progression]
+        lo = [entry[1] - entry[2] for entry in progression]
+        hi = [entry[3] - entry[1] for entry in progression]
         ax.errorbar(xs, ors, yerr=[lo, hi], fmt="o", color=BLUE, ecolor=GRAY,
                     elinewidth=2, capsize=5, ms=9)
         ax.axhline(1.0, color="black", ls="--", lw=1.5, label="OR = 1 (no effect)")
         ax.set_xticks(xs)
-        ax.set_xticklabels([f"{p[0]} subjects" for p in prog])
+        ax.set_xticklabels([f"{entry[0]} subjects" for entry in progression])
         ax.set_ylabel("odds ratio per 1 SD (95% interval)")
         ax.set_title("More data does not reveal an effect:\n"
                      "the odds ratio converges on 1.0 as the interval tightens")
@@ -245,8 +245,8 @@ def main():
         save(fig, "scaling_progression.png")
 
     print("\nCreated / refreshed:")
-    for c in created:
-        print("  " + c)
+    for rel_path in created:
+        print("  " + rel_path)
     print(f"\nTotal: {len(created)} files")
 
 

@@ -83,9 +83,9 @@ def main():
 
         # Alignment: Y rows <-> trial_metadata words (via trial_targets_metadata)
         if os.path.isfile(args.targets_map):
-            tmap = pd.read_csv(args.targets_map)
-            aligned = (len(tmap) == len(meta)
-                       and (tmap.word.values == meta.word.values).all())
+            targets_map = pd.read_csv(args.targets_map)
+            aligned = (len(targets_map) == len(meta)
+                       and (targets_map.word.values == meta.word.values).all())
             log.check("Y_t5 rows align with trial_metadata words "
                       "(order identical in trial_targets_metadata.csv)", aligned)
         else:
@@ -106,15 +106,14 @@ def main():
                   subs == {EXP_SUBJECT} and sess == {EXP_SESSION},
                   f"subjects={subs} sessions={sess}")
 
-        # -------- prints --------
         n_dropped = int((~meta["extracted"]).sum()) if "extracted" in meta.columns else 0
-        tp = int(meta["n_timepoints"].iloc[0]) if "n_timepoints" in meta.columns else N_TP
+        timepoints = int(meta["n_timepoints"].iloc[0]) if "n_timepoints" in meta.columns else N_TP
         log("\n--- summary ---")
         log(f"X_eeg shape            : {X.shape}")
         log(f"Y_t5 shape             : {Y.shape}")
         log(f"EEG feature dimension  : {X.shape[1]}")
         log(f"channel count          : {N_CH}")
-        log(f"timepoint count        : {tp}")
+        log(f"timepoint count        : {timepoints}")
         log(f"dropped trial count    : {n_dropped}")
         if "recalled" in meta.columns:
             log(f"recalled=1 / recalled=0: {int((meta.recalled==1).sum())} / "
